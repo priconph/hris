@@ -1,0 +1,117 @@
+<?php
+/**
+ * PHPExcel
+ *
+ * Copyright (C) 2006 - 2012 PHPExcel
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ *
+ * @category   PHPExcel
+ * @package    PHPExcel
+ * @copyright  Copyright (c) 2006 - 2012 PHPExcel (http://www.codeplex.com/PHPExcel)
+ * @license    http://www.gnu.org/licenses/old-licenses/lgpl-2.1.txt	LGPL
+ * @version    1.7.7, 2012-05-19
+ */
+
+/** Error reporting */
+error_reporting(E_ALL);
+
+date_default_timezone_set('Europe/London');
+
+/** Include PHPExcel */
+require_once '../Classes/PHPExcel.php';
+
+
+// Create new PHPExcel object
+$objPHPExcel = new PHPExcel();
+
+// Set document properties
+$objPHPExcel->getProperties()->setCreator("Maarten Balliauw")
+							 ->setLastModifiedBy("Maarten Balliauw")
+							 ->setTitle("Office 2007 XLSX Test Document")
+							 ->setSubject("Office 2007 XLSX Test Document")
+							 ->setDescription("Test document for Office 2007 XLSX, generated using PHP classes.")
+							 ->setKeywords("office 2007 openxml php")
+							 ->setCategory("Test result file");
+
+
+// Add some data
+$objPHPExcel->setActiveSheetIndex(0)
+            ->setCellValue('A1', 'Hello')
+            ->setCellValue('B2', 'world!')
+            ->setCellValue('C1', 'Hello')
+            ->setCellValue('D2', 'world!');
+
+// Miscellaneous glyphs, UTF-8
+$objPHPExcel->setActiveSheetIndex(0)
+            ->setCellValue('A4', 'Miscellaneous glyphs')
+            ->setCellValue('A5', 'éàèùâêîôûëïüÿäöüç');
+
+$objPHPExcel->setActiveSheetIndex(0)->setCellValue('A3', 'Product Id');
+$objPHPExcel->setActiveSheetIndex(0)->setCellValue('B3', 'Description');
+$objPHPExcel->setActiveSheetIndex(0)->setCellValue('C3', 'Price');
+$objPHPExcel->setActiveSheetIndex(0)->setCellValue('D3', 'Amount');
+$objPHPExcel->setActiveSheetIndex(0)->setCellValue('E3', 'Total');
+
+$objPHPExcel->setActiveSheetIndex(0)->setCellValue('A4', '1001');
+$objPHPExcel->setActiveSheetIndex(0)->setCellValue('B4', 'PHP for dummies');
+$objPHPExcel->setActiveSheetIndex(0)->setCellValue('C4', '20');
+$objPHPExcel->setActiveSheetIndex(0)->setCellValue('D4', '1');
+$objPHPExcel->setActiveSheetIndex(0)->setCellValue('E4', '=IF(D4<>"",C4*D4,"")');
+
+$objPHPExcel->setActiveSheetIndex(0)->setCellValue('A5', '1012');
+$objPHPExcel->setActiveSheetIndex(0)->setCellValue('B5', 'OpenXML for dummies');
+$objPHPExcel->setActiveSheetIndex(0)->setCellValue('C5', '22');
+$objPHPExcel->setActiveSheetIndex(0)->setCellValue('D5', '2');
+$objPHPExcel->setActiveSheetIndex(0)->setCellValue('E5', '=IF(D5<>"",C5*D5,"")');
+
+$objPHPExcel->setActiveSheetIndex(0)->setCellValue('E6', '=IF(D6<>"",C6*D6,"")');
+$objPHPExcel->setActiveSheetIndex(0)->setCellValue('E7', '=IF(D7<>"",C7*D7,"")');
+$objPHPExcel->setActiveSheetIndex(0)->setCellValue('E8', '=IF(D8<>"",C8*D8,"")');
+$objPHPExcel->setActiveSheetIndex(0)->setCellValue('E9', '=IF(D9<>"",C9*D9,"")');
+
+$objRichText = new PHPExcel_RichText();
+$objRichText->createText('This invoice is ');
+
+$objPayable = $objRichText->createTextRun('payable within thirty days after the end of the month');
+$objPayable->getFont()->setBold(true);
+$objPayable->getFont()->setItalic(true);
+$objPayable->getFont()->setColor( new PHPExcel_Style_Color( PHPExcel_Style_Color::COLOR_DARKGREEN ) );
+
+$objRichText->createText(', unless specified otherwise on the invoice.');
+
+$objPHPExcel->setActiveSheetIndex(0)->getCell('A18')->setValue($objRichText);
+
+
+$objPHPExcel->setActiveSheetIndex(0)->mergeCells('A18:E22');
+$objPHPExcel->setActiveSheetIndex(0)->mergeCells('A28:B28');		// Just to test...
+$objPHPExcel->setActiveSheetIndex(0)->unmergeCells('A28:B28');	// Just to test...
+
+// Rename worksheet
+$objPHPExcel->setActiveSheetIndex(0)->setTitle('Simple');
+
+
+// Set active sheet index to the first sheet, so Excel opens this as the first sheet
+$objPHPExcel->setActiveSheetIndex(0);
+
+
+// Redirect output to a client’s web browser (Excel2007)
+header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+header('Content-Disposition: attachment;filename="01simple.xlsx"');
+header('Cache-Control: max-age=0');
+
+$objWriter = PHPExcel_IOFactory::createWriter($objPHPExcel, 'Excel2007');
+$objWriter->save('php://output');
+exit;

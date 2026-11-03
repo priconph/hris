@@ -1,0 +1,132 @@
+html{
+    font-family: Tahoma;
+    font-size: 0.9em;
+}
+
+.transbox {
+	position:relative;
+    background-color: #f1f1f1;
+    border-style: solid;
+    border-color:#cccccc;
+    border-width:3px;
+}
+
+.reportdiv {
+float:left;
+padding: 25px 54px 32px 6px;
+}
+
+
+.searchdiv {
+float:left;
+ top:0;
+ left:0;
+ width:790px;
+}
+
+.returnValues {
+	clear:both;
+}
+
+.alertMessage {
+	text-align:center;
+    background-color: lightgreen;
+    color:black;
+}
+
+.group_title
+{
+	color:black;
+}
+
+body
+{
+	
+}
+
+h3
+{
+	color:gray;
+}
+
+h2
+{
+	color:#1A3380;
+}
+
+.search {
+	background:#FFFFFF url(search.png) no-repeat 7px 10px;
+	padding:4px 4px 4px 24px;
+	border:1px solid #CCCCCC;
+	width:200px;
+	height:30px;
+}
+
+.tb11 {
+	background:#FFFFFF url(src/search.png) no-repeat 4px 4px;
+	padding:4px 4px 4px 22px;
+	border:1px solid #CCCCCC;
+	width:240px;
+	height:30px;
+}
+.tb13{
+	background:#FFFFFF url(search.png) no-repeat 4px 4px;
+	padding:4px 4px 4px 22px;
+	border:1px solid #CCCCCC;
+	width:240px;
+	height:50px;
+}
+
+.comboBox{
+
+	padding:4px ;
+	border:1px solid #CCCCCC;
+	width:150px;
+	height:38px;
+	margin-bottom:2px;
+	
+}
+
+
+
+.styled-select select {
+   width: 180px;
+   padding: 5px;
+   font-size: 16px;
+   border: 1px solid #ccc;
+   height: 30px;
+   overflow: hidden;
+   background:transparent;
+}
+
+/* table sort colors */
+tr {border:0;padding:0;margin:0;}
+td, th {border:0;padding:2px 6px;margin:0;border-right:0px solid #336;border-bottom:0px solid #336;}
+td[axis='number'], td[axis='date'] {text-align:right;}
+th {white-space:no-wrap;background-color:#FFFFFF;padding:2px 20px;}
+tfoot td {border-top:1px solid #003;}
+thead th {border-bottom:2px solid #003;}
+.odd td {background-color:white;}
+.even td {background-color:#DDE5EB;}
+.hover td {background-color:#A5B3C9;}
+.sortedminus {background-color:#ecc;}
+.sortedplus {background-color:#cec;}
+.selrow td {background-color:#879AB7;}
+
+/* table sort style */
+table.sorted {
+	border-width: thick;
+	border-spacing: 5px;
+	border-style: outset;
+	border-color: gray;
+	border-collapse: collapse;
+	background-color: rgb(255, 250, 250);
+}
+
+th.status{
+  width: 1%
+}
+
+th.empNumber{
+	width: 1%
+}
