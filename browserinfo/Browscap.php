@@ -471,7 +471,11 @@ class Browscap
         $this->_userAgents = array_keys($browsers);
         usort(
             $this->_userAgents,
-            create_function(self::ORDER_FUNC_ARGS, self::ORDER_FUNC_LOGIC)
+            function ($a, $b) {
+                $a = strlen($a);
+                $b = strlen($b);
+                return $a == $b ? 0 : ($a < $b ? 1 : -1);
+            }
         );
 
         $user_agents_keys = array_flip($this->_userAgents);

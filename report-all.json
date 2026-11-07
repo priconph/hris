@@ -1,15 +1,10 @@
 {
-    "php": "8.2.12",
+    "php": "8.3.4",
     "source": "5.3.10",
     "target": "8.4.27",
-    "mode": "write",
+    "mode": "dry-run",
     "command": "run",
-    "fixes": {
-        "implicit nullable -> ?Type": 194,
-        "$str{0} -> $str[0]": 338,
-        "php4-constructor -> __construct": 2,
-        "magic_quotes/is_real/(real)": 2
-    },
+    "fixes": [],
     "sql_backticks": null,
     "findings": [
         {
@@ -17,7 +12,7 @@
             "line": 0,
             "sev": "error",
             "rule": "parse-error",
-            "msg": "does not parse on PHP 8.2: PHP Parse error:  Unclosed '{' on line 124 in \\\\SYSTEMONEV2\\WWW\\hris\\-1\\employeeinfo-1.php on line 125"
+            "msg": "does not parse on PHP 8.3: PHP Parse error:  Unclosed '{' on line 124 in \\\\SYSTEMONEV2\\WWW\\hris\\-1\\employeeinfo-1.php on line 125"
         },
         {
             "file": "\\\\SYSTEMONEV2\\WWW\\hris\\-1\\exportExcel (2).php",
@@ -111,97 +106,6 @@
             "msg": "ext/mysql removed in 7.0 -> PDO or mysqli with prepared statements (manual migration)"
         },
         {
-            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\-1\\exportExcel.php",
-            "line": 69,
-            "sev": "error",
-            "rule": "mysql_*",
-            "msg": "ext/mysql removed in 7.0 -> PDO or mysqli with prepared statements (manual migration)"
-        },
-        {
-            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\-1\\exportExcel.php",
-            "line": 70,
-            "sev": "error",
-            "rule": "mysql_*",
-            "msg": "ext/mysql removed in 7.0 -> PDO or mysqli with prepared statements (manual migration)"
-        },
-        {
-            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\-1\\exportExcel.php",
-            "line": 70,
-            "sev": "error",
-            "rule": "mysql_*",
-            "msg": "ext/mysql removed in 7.0 -> PDO or mysqli with prepared statements (manual migration)"
-        },
-        {
-            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\-1\\exportExcel.php",
-            "line": 72,
-            "sev": "error",
-            "rule": "mysql_*",
-            "msg": "ext/mysql removed in 7.0 -> PDO or mysqli with prepared statements (manual migration)"
-        },
-        {
-            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\-1\\exportExcel.php",
-            "line": 73,
-            "sev": "error",
-            "rule": "mysql_*",
-            "msg": "ext/mysql removed in 7.0 -> PDO or mysqli with prepared statements (manual migration)"
-        },
-        {
-            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\-1\\exportExcel.php",
-            "line": 73,
-            "sev": "error",
-            "rule": "mysql_*",
-            "msg": "ext/mysql removed in 7.0 -> PDO or mysqli with prepared statements (manual migration)"
-        },
-        {
-            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\-1\\exportExcel.php",
-            "line": 75,
-            "sev": "error",
-            "rule": "mysql_*",
-            "msg": "ext/mysql removed in 7.0 -> PDO or mysqli with prepared statements (manual migration)"
-        },
-        {
-            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\-1\\exportExcel.php",
-            "line": 76,
-            "sev": "error",
-            "rule": "mysql_*",
-            "msg": "ext/mysql removed in 7.0 -> PDO or mysqli with prepared statements (manual migration)"
-        },
-        {
-            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\-1\\exportExcel.php",
-            "line": 76,
-            "sev": "error",
-            "rule": "mysql_*",
-            "msg": "ext/mysql removed in 7.0 -> PDO or mysqli with prepared statements (manual migration)"
-        },
-        {
-            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\-1\\exportExcel.php",
-            "line": 106,
-            "sev": "error",
-            "rule": "mysql_*",
-            "msg": "ext/mysql removed in 7.0 -> PDO or mysqli with prepared statements (manual migration)"
-        },
-        {
-            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\-1\\exportExcel.php",
-            "line": 108,
-            "sev": "error",
-            "rule": "mysql_*",
-            "msg": "ext/mysql removed in 7.0 -> PDO or mysqli with prepared statements (manual migration)"
-        },
-        {
-            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\-1\\exportExcel.php",
-            "line": 117,
-            "sev": "error",
-            "rule": "mysql_*",
-            "msg": "ext/mysql removed in 7.0 -> PDO or mysqli with prepared statements (manual migration)"
-        },
-        {
-            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\-1\\exportExcel.php",
-            "line": 121,
-            "sev": "error",
-            "rule": "mysql_*",
-            "msg": "ext/mysql removed in 7.0 -> PDO or mysqli with prepared statements (manual migration)"
-        },
-        {
             "file": "\\\\SYSTEMONEV2\\WWW\\hris\\-1\\exporttest.php",
             "line": 26,
             "sev": "error",
@@ -280,34 +184,6 @@
         },
         {
             "file": "\\\\SYSTEMONEV2\\WWW\\hris\\dashboard\\class\\oop.php",
-            "line": 24,
-            "sev": "info",
-            "rule": "E_USER_ERROR",
-            "msg": "trigger_error(E_USER_ERROR) deprecated in 8.4 -> throw an exception"
-        },
-        {
-            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\dashboard\\class\\oop.php",
-            "line": 29,
-            "sev": "info",
-            "rule": "E_USER_ERROR",
-            "msg": "trigger_error(E_USER_ERROR) deprecated in 8.4 -> throw an exception"
-        },
-        {
-            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\dashboard\\class\\oop.php",
-            "line": 154,
-            "sev": "error",
-            "rule": "mssql_*",
-            "msg": "ext/mssql removed in 7.0 -> PDO_SQLSRV / sqlsrv_*"
-        },
-        {
-            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\dashboard\\class\\oop.php",
-            "line": 155,
-            "sev": "error",
-            "rule": "mssql_*",
-            "msg": "ext/mssql removed in 7.0 -> PDO_SQLSRV / sqlsrv_*"
-        },
-        {
-            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\dashboard\\class\\oop.php",
             "line": 161,
             "sev": "error",
             "rule": "mssql_*",
@@ -315,38 +191,10 @@
         },
         {
             "file": "\\\\SYSTEMONEV2\\WWW\\hris\\dashboard\\class\\oop.php",
-            "line": 171,
+            "line": 181,
             "sev": "error",
             "rule": "mssql_*",
             "msg": "ext/mssql removed in 7.0 -> PDO_SQLSRV / sqlsrv_*"
-        },
-        {
-            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\dashboard\\class\\oop.php",
-            "line": 173,
-            "sev": "error",
-            "rule": "mssql_*",
-            "msg": "ext/mssql removed in 7.0 -> PDO_SQLSRV / sqlsrv_*"
-        },
-        {
-            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\db_hris.php",
-            "line": 2,
-            "sev": "error",
-            "rule": "mysql_*",
-            "msg": "ext/mysql removed in 7.0 -> PDO or mysqli with prepared statements (manual migration)"
-        },
-        {
-            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\db_hris.php",
-            "line": 4,
-            "sev": "error",
-            "rule": "mysql_*",
-            "msg": "ext/mysql removed in 7.0 -> PDO or mysqli with prepared statements (manual migration)"
-        },
-        {
-            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\db_hris.php",
-            "line": 6,
-            "sev": "error",
-            "rule": "mysql_*",
-            "msg": "ext/mysql removed in 7.0 -> PDO or mysqli with prepared statements (manual migration)"
         },
         {
             "file": "\\\\SYSTEMONEV2\\WWW\\hris\\excel\\Classes\\PHPExcel.php",
@@ -465,7 +313,7 @@
             "line": 0,
             "sev": "error",
             "rule": "parse-error",
-            "msg": "does not parse on PHP 8.2: PHP Fatal error:  'break' not in the 'loop' or 'switch' context in \\\\SYSTEMONEV2\\WWW\\hris\\excel\\Classes\\PHPExcel\\Calculation\\Functions.php on line 574"
+            "msg": "does not parse on PHP 8.3: PHP Fatal error:  'break' not in the 'loop' or 'switch' context in \\\\SYSTEMONEV2\\WWW\\hris\\excel\\Classes\\PHPExcel\\Calculation\\Functions.php on line 574"
         },
         {
             "file": "\\\\SYSTEMONEV2\\WWW\\hris\\excel\\Classes\\PHPExcel\\Calculation\\TextData.php",
@@ -860,11 +708,18 @@
             "msg": "required parameter after optional parameter (deprecated since 8.0) -> reorder or make required one nullable/defaulted"
         },
         {
-            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\uploads.php",
-            "line": 39,
+            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\includes\\mssql_pdo.php",
+            "line": 24,
             "sev": "error",
-            "rule": "mysql_*",
-            "msg": "ext/mysql removed in 7.0 -> PDO or mysqli with prepared statements (manual migration)"
+            "rule": "mssql_*",
+            "msg": "ext/mssql removed in 7.0 -> PDO_SQLSRV / sqlsrv_*"
+        },
+        {
+            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\includes\\mssql_pdo.php",
+            "line": 31,
+            "sev": "error",
+            "rule": "mssql_*",
+            "msg": "ext/mssql removed in 7.0 -> PDO_SQLSRV / sqlsrv_*"
         }
     ]
 }

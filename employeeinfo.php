@@ -54,12 +54,41 @@ function convertDateFromatViewing($date)
     return $returnDate;
 }
 
+//returns '' for any missing column, so the form renders blank when no employee is loaded
+class EmpInfoBlank implements ArrayAccess
+{
+    private $data = array();
+    public function offsetExists($offset): bool { return isset($this->data[$offset]); }
+    public function offsetGet($offset): mixed { return $this->data[$offset] ?? ''; }
+    public function offsetSet($offset, $value): void { $this->data[$offset] = $value; }
+    public function offsetUnset($offset): void { unset($this->data[$offset]); }
+}
+
 //initialize empkid
 $pkid = "";
+$message = "";
+$EmpInfo = new EmpInfoBlank();
 
     //get gor testing
     if ($_SERVER["REQUEST_METHOD"] == "POST")// || $_SERVER["REQUEST_METHOD"] == "GET")
     {
+        //keys the handler below reads; a missing one behaves as '' (same as the old null)
+        $_POST += array_fill_keys(array(
+            'pkid', 'DateOfBirth', 'DateGraduated', 'DateHired', 'DepDateOfBirth', 'EffectivityDate',
+            'NotificationDate', 'EmployeeNo', 'TaxDependent', 'formtype', 'LastName', 'FirstName',
+            'MiddleName', 'NickName', 'Gender', 'CivilStatus', 'Spouse', 'TaxExemptionBase',
+            'CityAddStreet', 'CityAddBarangay', 'CityAdd', 'ProvAddressBarangay',
+            'ProvAddressMunicipality', 'ProvAddress', 'Telephone', 'IncomingShuttle',
+            'OutgoingShuttle', 'Remarks', 'HighestEducationalAttainment', 'SchoolAddress',
+            'DegreeObtained', 'HonorsAwards', 'GovernmentExams', 'Division', 'Department', 'Section',
+            'Position', 'EmploymentStatus', 'Status', 'SalaryType', 'SSS', 'TIN', 'PagIbig',
+            'PhilHealth', 'BloodType', 'ResEffectDate', 'ResReason', 'FatherName', 'MotherName',
+            'PersonToBeNotified', 'DepLastName', 'DepFirstName', 'DepMiddleName', 'Relationship',
+            'deppkid', 'Action', 'NatureOfOffense', 'DefinitionOfOffense', 'FrequencyOfOffense',
+            'Offensepkid', 'historyDivision', 'historyDepartment', 'historySection',
+            'historyPosition', 'historyFrom', 'historyTo', 'historypkid', 'tabIndex'
+        ), '');
+
         ////////for development
         ////$_POST["pkid"] = $_GET["pkid"];
 
@@ -595,8 +624,8 @@ $pkid = "";
 
         //get the selected tab
         var selectedTab = <?php 
-        if ($_POST["tabIndex"]!="") 
-            echo $_POST["tabIndex"];
+        if (($_POST["tabIndex"] ?? "")!="") 
+            echo (int)$_POST["tabIndex"];
         else
             echo "0";
         ?>;
@@ -1715,7 +1744,7 @@ function updateSectionList()
                                                 <td axis="number" headers="dob"><?php 
                                                     if($pkid!="")
                                                     {
-                                                        if ($EmpInfo['DOBirth']!='0000-00-00'){
+                                                        if ($row['DoBirth']!='0000-00-00'){
                                                         $date = new DateTime($row['DoBirth']);
                                                         echo $date->format('m/d/Y');}
                                                     }
@@ -1759,9 +1788,9 @@ function updateSectionList()
                                                 <?php
                                                 //get corresponding value for tax dependent
                                                 if($row['TaxDependent']==1)
-                                                    $taxdep = yes;
+                                                    $taxdep = 'yes';
                                                 else
-                                                    $taxdep = no;
+                                                    $taxdep = 'no';
                                                 ?>
 
                                                 <td axis="string" headers="dep" align="center"><?php echo $taxdep ?></td>

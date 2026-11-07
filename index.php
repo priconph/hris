@@ -1,7 +1,13 @@
 <?php
 
+// session_start();
+
 	session_start();
+
 	require_once("../global_includes/hris-oop.php");
+
+//  echo  $_SESSION['username'];
+//   exit;
 	if(!isset($_SESSION['username'])){
 		echo "Please login to systemone!";
 		exit;
