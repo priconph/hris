@@ -229,7 +229,7 @@ class PHPExcel_Worksheet_Drawing_Shadow implements PHPExcel_IComparable
      * @throws 	Exception
      * @return PHPExcel_Worksheet_Drawing_Shadow
      */
-    public function setColor(PHPExcel_Style_Color $pValue = null) {
+    public function setColor(?PHPExcel_Style_Color $pValue = null) {
    		$this->_color = $pValue;
    		return $this;
     }

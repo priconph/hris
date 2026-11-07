@@ -136,7 +136,7 @@ class PHPExcel_Writer_Excel2007_Theme extends PHPExcel_Writer_Excel2007_WriterPa
 	 * @return 	string 		XML Output
 	 * @throws 	Exception
 	 */
-	public function writeTheme(PHPExcel $pPHPExcel = null)
+	public function writeTheme(?PHPExcel $pPHPExcel = null)
 	{
 			// Create XML writer
 			$objWriter = null;

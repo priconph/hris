@@ -212,7 +212,7 @@
   //   Note that no real action is taken, if the archive does not exist it is not
   //   created. Use create() for that.
   // --------------------------------------------------------------------------------
-  function PclZip($p_zipname)
+  function __construct($p_zipname)
   {
 
     // ----- Tests the zlib
@@ -5340,7 +5340,7 @@
 	}
 
 	// ----- Get and memorize the magic_quote value
-	$this->magic_quotes_status = @get_magic_quotes_runtime();
+	$this->magic_quotes_status = @false;
 
 	// ----- Disable magic_quotes
 	if ($this->magic_quotes_status == 1) {

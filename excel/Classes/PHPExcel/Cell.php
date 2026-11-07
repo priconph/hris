@@ -128,7 +128,7 @@ class PHPExcel_Cell
 	 * @param	PHPExcel_Worksheet	$pSheet
 	 * @throws	Exception
 	 */
-	public function __construct($pColumn = 'A', $pRow = 1, $pValue = null, $pDataType = null, PHPExcel_Worksheet $pSheet = null)
+	public function __construct($pColumn = 'A', $pRow = 1, $pValue = null, $pDataType = null, ?PHPExcel_Worksheet $pSheet = null)
 	{
 		// Initialise cell coordinate
 		$this->_column = strtoupper($pColumn);
@@ -395,7 +395,7 @@ class PHPExcel_Cell
 	 * @throws	Exception
 	 * @return PHPExcel_Cell
 	 */
-	public function setDataValidation(PHPExcel_Cell_DataValidation $pDataValidation = null)
+	public function setDataValidation(?PHPExcel_Cell_DataValidation $pDataValidation = null)
 	{
 		if (!isset($this->_parent)) {
 			throw new Exception('Cannot set data validation for cell that is not bound to a worksheet');
@@ -442,7 +442,7 @@ class PHPExcel_Cell
 	 * @throws	Exception
 	 * @return PHPExcel_Cell
 	 */
-	public function setHyperlink(PHPExcel_Cell_Hyperlink $pHyperlink = null)
+	public function setHyperlink(?PHPExcel_Cell_Hyperlink $pHyperlink = null)
 	{
 		if (!isset($this->_parent)) {
 			throw new Exception('Cannot set hyperlink for cell that is not bound to a worksheet');
@@ -698,19 +698,19 @@ class PHPExcel_Cell
 
 		//	We also use the language construct isset() rather than the more costly strlen() function to match the length of $pString
 		//		for improved performance
-		if (isset($pString{0})) {
-			if (!isset($pString{1})) {
+		if (isset($pString[0])) {
+			if (!isset($pString[1])) {
 				$_indexCache[$pString] = $_columnLookup[$pString];
 				return $_indexCache[$pString];
-			} elseif(!isset($pString{2})) {
-				$_indexCache[$pString] = $_columnLookup[$pString{0}] * 26 + $_columnLookup[$pString{1}];
+			} elseif(!isset($pString[2])) {
+				$_indexCache[$pString] = $_columnLookup[$pString[0]] * 26 + $_columnLookup[$pString[1]];
 				return $_indexCache[$pString];
-			} elseif(!isset($pString{3})) {
-				$_indexCache[$pString] = $_columnLookup[$pString{0}] * 676 + $_columnLookup[$pString{1}] * 26 + $_columnLookup[$pString{2}];
+			} elseif(!isset($pString[3])) {
+				$_indexCache[$pString] = $_columnLookup[$pString[0]] * 676 + $_columnLookup[$pString[1]] * 26 + $_columnLookup[$pString[2]];
 				return $_indexCache[$pString];
 			}
 		}
-		throw new Exception("Column string index can not be " . ((isset($pString{0})) ? "longer than 3 characters" : "empty") . ".");
+		throw new Exception("Column string index can not be " . ((isset($pString[0])) ? "longer than 3 characters" : "empty") . ".");
 	}
 
 	/**
@@ -835,7 +835,7 @@ class PHPExcel_Cell
 	 * @param PHPExcel_Cell_IValueBinder $binder
 	 * @throws Exception
 	 */
-	public static function setValueBinder(PHPExcel_Cell_IValueBinder $binder = null) {
+	public static function setValueBinder(?PHPExcel_Cell_IValueBinder $binder = null) {
 		if ($binder === NULL) {
 			throw new Exception("A PHPExcel_Cell_IValueBinder is required for PHPExcel to function correctly.");
 		}

@@ -1,12 +1,14 @@
 <?php
+require_once __DIR__ . '/../../includes/mssql_pdo.php';
+
 //Set Class name here, it's a good practice to Capitalize the first letter, I've just read it somewhere on the internet... so its up to you if will follow...
 class OOP extends mysqli 
 {
 	private static $instance = null;
 	
 	//db connection config variables
-	private $user = "root";	//Username
-	private $pass = "newd3v"; //Password
+	private $user;	//Username, from HRIS_DB_USER
+	private $pass; //Password, from HRIS_DB_PASS
 	private $dbName = "db_acl"; //db_name Note: if you are going to use multiple database just place one here.. use sql to call the other one just in case, for example : database2.tablename
 	private $dbHost = "localhost"; //host
 	
@@ -21,21 +23,29 @@ class OOP extends mysqli
 
 	public function __clone()
 	{
-		trigger_error('Clone is not allowed.',E_USER_ERROR);
+		throw new LogicException('Clone is not allowed.');
 	}
 	
 	public function __wakeup()
 	{
-		trigger_error('Deserializing is not allowed.',E_USER_ERROR);
+		throw new LogicException('Deserializing is not allowed.');
 	}
 	
 	private function __construct() {
+		$user = getenv('HRIS_DB_USER');
+		$pass = getenv('HRIS_DB_PASS');
+		if ($user === false || $pass === false) {
+			throw new RuntimeException('HRIS_DB_USER or HRIS_DB_PASS is not set');
+		}
+		$this->user = $user;
+		$this->pass = $pass;
 		parent::__construct($this->dbHost, $this->user, $this->pass, $this->dbName);
 		if(mysqli_connect_error())
 		{
 			exit('Connect Error (' . mysqli_connect_errno() . ') ' . mysqli_connect_error());
 		}
-		parent::set_charset('utf-8');
+		// TODO: confirm table charset
+		$this->set_charset('utf8mb4');
 	}
 
 	////////////////////////////////////UP TO HERE////////////////////////////////////////
@@ -142,24 +152,23 @@ class OOP extends mysqli
 
 //THIS CLASS CONNECTS INTO THE YPICS SERVER OR MSSQL Server	
 class YPICS{
-	//MALACHIXD CONNECTION INFO
-	private $serverM = "192.168.3.251\MSSQLSERVER"; //MSSQL Server of ypics
-	private $userM ="builder";  //username
-	private $passM = ""; //password
-	private $databaseM = ""; //database
-	private $db_handleM =""; //handler 
+	//MALACHIXD CONNECTION INFO: MSSQL_HOST, MSSQL_DB, MSSQL_USER, MSSQL_PASS (see includes/mssql_pdo.php)
+	private $db_handleM = null; //handler 
 	
 	//FUNCTION TO CONNECT TO MALACHI SERVER	
     private function connect_DBM(){
-        $this->db_handleM = mssql_connect($this->serverM,$this->userM,$this->passM);
-            return mssql_select_db($this->databaseM,$this->db_handleM);
+        try {
+            $this->db_handleM = mssql_pdo_connect();
+            return true;
+        } catch (PDOException | RuntimeException $e) {
+            error_log('YPICS connect_DBM: ' . $e->getMessage());
+            return false;
+        }
     }
    
-    //FUNCTION TO CLOSE MALACHI SERVER
+    //FUNCTION TO CLOSE MALACHI SERVER (the shared PDO instance closes at script end)
     private function close_DBM(){
-        if(isset($this->db_handleM)){
-            mssql_close($this->db_handleM);
-        }
+        $this->db_handleM = null;
     }
 	
 	/////////////////////////////////PUBLIC FUNCTIONS///////////////////////////////////////////////	
@@ -168,9 +177,12 @@ class YPICS{
 		$db_found = $this->connect_DBM();
 		if($db_found){
 			$SQL = "SELECT * FROM VwProdSchedMaster ORDER BY PONum";
-			$result = mssql_query($SQL);
-			return $result;
-			mssql_free_result($result);
+			try {
+				return mssql_pdo_query($SQL);
+			} catch (PDOException $e) {
+				error_log('YPICS selectPoNum: ' . $e->getMessage());
+				return false;
+			}
 		}
 		else{
 			$errorMsg = "Database not found, Please contact your administrator";

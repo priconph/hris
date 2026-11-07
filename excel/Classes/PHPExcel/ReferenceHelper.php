@@ -76,7 +76,7 @@ class PHPExcel_ReferenceHelper
 	 * @param	int	$pNumRows	Number of rows to insert
 	 * @throws	Exception
 	 */
-	public function insertNewBefore($pBefore = 'A1', $pNumCols = 0, $pNumRows = 0, PHPExcel_Worksheet $pSheet = null) {
+	public function insertNewBefore($pBefore = 'A1', $pNumCols = 0, $pNumRows = 0, ?PHPExcel_Worksheet $pSheet = null) {
 		$aCellCollection = $pSheet->getCellCollection();
 
 		// Get coordinates of $pBefore
@@ -598,10 +598,10 @@ class PHPExcel_ReferenceHelper
 			list($newColumn, $newRow) = PHPExcel_Cell::coordinateFromString( $pCellReference );
 
 			// Verify which parts should be updated
-			$updateColumn = (($newColumn{0} != '$') && ($beforeColumn{0} != '$') &&
+			$updateColumn = (($newColumn[0] != '$') && ($beforeColumn[0] != '$') &&
 							 PHPExcel_Cell::columnIndexFromString($newColumn) >= PHPExcel_Cell::columnIndexFromString($beforeColumn));
 
-			$updateRow = (($newRow{0} != '$') && ($beforeRow{0} != '$') &&
+			$updateRow = (($newRow[0] != '$') && ($beforeRow[0] != '$') &&
 						  $newRow >= $beforeRow);
 
 			// Create new column reference

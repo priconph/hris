@@ -338,7 +338,7 @@ class PHPExcel_Style_Border implements PHPExcel_IComparable
 	 * @throws	Exception
 	 * @return PHPExcel_Style_Border
 	 */
-	public function setColor(PHPExcel_Style_Color $pValue = null) {
+	public function setColor(?PHPExcel_Style_Color $pValue = null) {
 		// make sure parameter is a real color and not a supervisor
 		$color = $pValue->getIsSupervisor() ? $pValue->getSharedComponent() : $pValue;
 

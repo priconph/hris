@@ -147,7 +147,7 @@ class PHPExcel_Writer_Excel2007_StringTable extends PHPExcel_Writer_Excel2007_Wr
 	 * @param 	string						$prefix			Optional Namespace prefix
 	 * @throws 	Exception
 	 */
-	public function writeRichText(PHPExcel_Shared_XMLWriter $objWriter = null, PHPExcel_RichText $pRichText = null, $prefix=NULL)
+	public function writeRichText(?PHPExcel_Shared_XMLWriter $objWriter = null, ?PHPExcel_RichText $pRichText = null, $prefix=NULL)
 	{
 		if ($prefix !== NULL)
 			$prefix .= ':';
@@ -229,7 +229,7 @@ class PHPExcel_Writer_Excel2007_StringTable extends PHPExcel_Writer_Excel2007_Wr
 	 * @param 	string						$prefix			Optional Namespace prefix
 	 * @throws 	Exception
 	 */
-	public function writeRichTextForCharts(PHPExcel_Shared_XMLWriter $objWriter = null, PHPExcel_RichText $pRichText = null, $prefix=NULL)
+	public function writeRichTextForCharts(?PHPExcel_Shared_XMLWriter $objWriter = null, ?PHPExcel_RichText $pRichText = null, $prefix=NULL)
 	{
 		if ($prefix !== NULL)
 			$prefix .= ':';

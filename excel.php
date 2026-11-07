@@ -2,8 +2,13 @@
 
 require_once('../global_includes/hris-oop.php');
 
-//include the main excel class
-require_once('excel/Classes/PHPExcel.php');
+//PhpSpreadsheet (installed with Composer)
+require_once __DIR__ . '/vendor/autoload.php';
+
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\IOFactory;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
 
 // $headerValues[$i][0]
 // the original header
@@ -265,8 +270,8 @@ function replaceValue($inputValue,$inputIndex)
     return $inputValue;
 }
 
-// Create new PHPExcel object
-$objPHPExcel = new PHPExcel();
+// Create new Spreadsheet object
+$objPHPExcel = new Spreadsheet();
 
 // Set document properties
 $objPHPExcel->getProperties()->setCreator("System One")
@@ -295,7 +300,7 @@ function setBold($cell)
 function setStyle($cell)
 {
 	global $objPHPExcel;
-	$objPHPExcel->setActiveSheetIndex(0)->getStyle($cell)->getAlignment()->setVertical(PHPExcel_Style_Alignment::VERTICAL_TOP);
+	$objPHPExcel->setActiveSheetIndex(0)->getStyle($cell)->getAlignment()->setVertical(Alignment::VERTICAL_TOP);
 	$objPHPExcel->setActiveSheetIndex(0)->getStyle($cell)->getAlignment()->setWrapText(true);
 }
 
@@ -322,7 +327,7 @@ function endExcel($title)
 	header('Content-Disposition: attachment;filename="'.$filename.'.xlsx"');
 	header('Cache-Control: max-age=0');
 
-	$objWriter = PHPExcel_IOFactory::createWriter($objPHPExcel, 'Excel2007');
+	$objWriter = IOFactory::createWriter($objPHPExcel, 'Xlsx');
 	$objWriter->save('php://output');
 	exit;
 }
@@ -332,7 +337,7 @@ function endExcel($title)
 function setAlternatingColor($cell)
 {
 	global $objPHPExcel;
-	$objPHPExcel->getActiveSheet()->getStyle($cell)->getFill()->setFillType(PHPExcel_Style_Fill::FILL_SOLID);
+	$objPHPExcel->getActiveSheet()->getStyle($cell)->getFill()->setFillType(Fill::FILL_SOLID);
     $objPHPExcel->getActiveSheet()->getStyle($cell)->getFill()->getStartColor()->setARGB('c5d9f1');
 }
 
@@ -382,7 +387,7 @@ function setAutosize($column)
 function createLine($row,$fromLetter,$toLetter)
 {
     global $objPHPExcel;
-    $objPHPExcel->getActiveSheet()->getStyle($fromLetter.$row.':'.$toLetter.$row)->getFill()->setFillType(PHPExcel_Style_Fill::FILL_SOLID);
+    $objPHPExcel->getActiveSheet()->getStyle($fromLetter.$row.':'.$toLetter.$row)->getFill()->setFillType(Fill::FILL_SOLID);
     $objPHPExcel->getActiveSheet()->getStyle($fromLetter.$row.':'.$toLetter.$row)->getFill()->getStartColor()->setARGB('black');
     $objPHPExcel->getActiveSheet()->getRowDimension($row)->setRowHeight(2);
     return;
@@ -410,9 +415,9 @@ function adjustcolumnHeader($Letter,$number,$headerName)
     else
         $objPHPExcel->setActiveSheetIndex(0)->getColumnDimension($Letter)->setAutoSize(true);
 
-    $objPHPExcel->getActiveSheet()->getStyle($Letter.$number)->getAlignment()->setVertical(PHPExcel_Style_Alignment::VERTICAL_TOP);
+    $objPHPExcel->getActiveSheet()->getStyle($Letter.$number)->getAlignment()->setVertical(Alignment::VERTICAL_TOP);
     $objPHPExcel->getActiveSheet()->getStyle($Letter.$number)->getAlignment()->setWrapText(true);
-    $objPHPExcel->getActiveSheet()->getStyle($Letter.$number)->getAlignment()->setHorizontal(PHPExcel_Style_Alignment::HORIZONTAL_CENTER);
+    $objPHPExcel->getActiveSheet()->getStyle($Letter.$number)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
 
     return;
 }

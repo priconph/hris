@@ -1,7 +1,33 @@
-<?php  
-	$conn = mysql_connect('localhost', 'root', 'newd3v');
-	if (!$conn){
-		die('Could not connect: ' . mysql_error());
+<?php
+	// Credentials come from the server environment, never from source.
+	function getPdo(): PDO
+	{
+		static $pdo = null;
+		if ($pdo === null) {
+			$host = getenv('HRIS_DB_HOST');
+			$name = getenv('HRIS_DB_NAME');
+			$user = getenv('HRIS_DB_USER');
+			$pass = getenv('HRIS_DB_PASS');
+			if ($user === false || $pass === false) {
+				throw new RuntimeException('HRIS_DB_USER or HRIS_DB_PASS is not set');
+			}
+			// TODO: confirm table charset
+			$dsn  = 'mysql:host=' . ($host !== false ? $host : 'localhost')
+				  . ';dbname=' . ($name !== false ? $name : 'db_hris')
+				  . ';charset=utf8mb4';
+			$pdo = new PDO($dsn, $user, $pass, [
+				PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
+				PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+				PDO::ATTR_EMULATE_PREPARES   => false,
+			]);
+		}
+		return $pdo;
 	}
-	mysql_select_db("db_hris", $conn);
+
+	try {
+		$conn = getPdo();
+	} catch (PDOException | RuntimeException $e) {
+		error_log('db_hris.php: ' . $e->getMessage());
+		die('Could not connect to the database.');
+	}
 ?>

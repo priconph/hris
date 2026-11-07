@@ -213,7 +213,7 @@ class PHPExcel
      * @return PHPExcel_Worksheet
      * @throws Exception
      */
-    public function addSheet(PHPExcel_Worksheet $pSheet = null, $iSheetIndex = null)
+    public function addSheet(?PHPExcel_Worksheet $pSheet = null, $iSheetIndex = null)
     {
         if($iSheetIndex === NULL) {
             $this->_workSheetCollection[] = $pSheet;
@@ -477,7 +477,7 @@ class PHPExcel
 	 * @param PHPExcel_Worksheet|null $pSheet Scope. Use null for global scope
 	 * @return PHPExcel_NamedRange|null
 	 */
-	public function getNamedRange($namedRange, PHPExcel_Worksheet $pSheet = null) {
+	public function getNamedRange($namedRange, ?PHPExcel_Worksheet $pSheet = null) {
 		$returnValue = null;
 
 		if ($namedRange != '' && ($namedRange !== NULL)) {
@@ -502,7 +502,7 @@ class PHPExcel
 	 * @param  PHPExcel_Worksheet|null  $pSheet  Scope: use null for global scope.
 	 * @return PHPExcel
 	 */
-	public function removeNamedRange($namedRange, PHPExcel_Worksheet $pSheet = null) {
+	public function removeNamedRange($namedRange, ?PHPExcel_Worksheet $pSheet = null) {
 		if ($pSheet === NULL) {
 			if (isset($this->_namedRanges[$namedRange])) {
 				unset($this->_namedRanges[$namedRange]);

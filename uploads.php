@@ -9,6 +9,9 @@ $pdf_file = 'pdfuploads/';
 $count = 0;
 
 if(isset($_POST) and $_SERVER['REQUEST_METHOD'] == "POST"){
+	// Posted by the $.ajax upload in employeeinfo.php (type: "POST")
+	$fkEmployee = filter_input(INPUT_POST, 'fkEmployee', FILTER_VALIDATE_INT);
+	$fkCategory = filter_input(INPUT_POST, 'fkCategory', FILTER_VALIDATE_INT);
 	// Loop $_FILES to execute all files
 	foreach ($_FILES['files']['name'] as $f => $name) {     
 	    if ($_FILES['files']['error'][$f] == 4) {
@@ -35,8 +38,16 @@ if(isset($_POST) and $_SERVER['REQUEST_METHOD'] == "POST"){
 			 else{ // No error found! Move uploaded files 
       
 			if(move_uploaded_file($_FILES["files"]["tmp_name"][$f], $pdf_file.$name)) {
-			$sql="INSERT INTO tbl_upload_file(file_name,fkEmployee,fkCategory) VALUES('$name','".$_POST['fkEmployee']."','".$_POST['fkCategory']."')";
-			mysql_query($sql);
+			try {
+				$stmt = getPdo()->prepare('INSERT INTO tbl_upload_file(file_name,fkEmployee,fkCategory) VALUES(:file_name, :fkEmployee, :fkCategory)');
+				$stmt->execute([
+					':file_name'  => $name,
+					':fkEmployee' => $_POST['fkEmployee'] ?? '',
+					':fkCategory' => $_POST['fkCategory'] ?? '',
+				]);
+			} catch (PDOException $e) {
+				error_log('uploads.php insert: ' . $e->getMessage());
+			}
 			
 				 $query = HRISDB::getInstance()->get_renamefile($name, $fkEmployee, $fkCategory);
 				 while($row = mysqli_fetch_array($query)){

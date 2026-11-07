@@ -27,11 +27,8 @@ function replaceValue()
 }
 
 
-//EDIT YOUR MySQL Connection Info:
-$DB_Server = "localhost";        //your MySQL Server
-$DB_Username = "builder";        //your MySQL User Name
-$DB_Password = "newd3v";         //your MySQL Password
-$DB_DBName = "db_hris";           //your MySQL Database Name
+//MySQL connection comes from db_hris.php (credentials from the server environment)
+require_once __DIR__ . '/../db_hris.php';
 $DB_TBLName = "tbl_EmployeeInfo";      //your MySQL Table Name
  
 //$DB_TBLName,  $DB_DBName, may also be commented out & passed to the browser
@@ -65,15 +62,19 @@ just edit the above.
  
 (Editing of code past this point recommended only for advanced users.)
 */
-//create MySQL connection
-$Connect = @MYSQL_CONNECT($DB_Server, $DB_Username, $DB_Password)
-     or DIE("Couldn't connect to MySQL:<br>" . MYSQL_ERROR() . "<br>" . MYSQL_ERRNO());
-//select database
-$Db = @MYSQL_SELECT_DB($DB_DBName, $Connect)
-     or DIE("Couldn't select database:<br>" . MYSQL_ERROR(). "<br>" . MYSQL_ERRNO());
 //execute query
-$result = @MYSQL_QUERY($sql,$Connect)
-     or DIE("Couldn't execute query:<br>" . MYSQL_ERROR(). "<br>" . MYSQL_ERRNO());
+//OPEN ITEM: $sql is the full query posted by the browser; it cannot be bound and must be redesigned
+if (!isset($sql)) {
+     DIE("Couldn't execute query.");
+}
+try {
+     $result = getPdo()->prepare($sql);
+     $result->execute();
+} catch (PDOException $e) {
+     error_log('-1/exportExcel.php: ' . $e->getMessage());
+     DIE("Couldn't execute query.");
+}
+$numFields = $result->columnCount();
  
 //if this parameter is included ($w=1), file returned will be in word format ('.doc')
 //if parameter is not included, file returned will be in excel format ('.xls')
@@ -103,9 +104,10 @@ HEADER("Expires: 0");
      $sep = "\t"; //tabbed character
  
      //start of printing column names as names of MySQL fields
-     FOR ($i = 0; $i < MYSQL_NUM_FIELDS($result); $i++)
+     FOR ($i = 0; $i < $numFields; $i++)
      {
-         ECHO MYSQL_FIELD_NAME($result,$i) . $sep;
+         $meta = $result->getColumnMeta($i);
+         ECHO $meta['name'] . $sep;
      }
 
 
@@ -114,11 +116,11 @@ HEADER("Expires: 0");
      //end of printing column names
  
      //start while loop to get data
-     WHILE($row = MYSQL_FETCH_ROW($result))
+     WHILE($row = $result->fetch(PDO::FETCH_NUM))
      {
          //set_time_limit(60); // HaRa
          $schema_insert = " ";
-         FOR($j=0; $j<mysql_num_fields($result);$j++)
+         FOR($j=0; $j<$numFields;$j++)
          {
              IF(!ISSET($row[$j]))
                  $schema_insert .= "NULL".$sep;
