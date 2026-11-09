@@ -8,7 +8,7 @@ include_once 'db_hris.php';
 
 ob_start(); 
 session_start();
-$username = $_SESSION['username'];
+$username = $_SESSION['username'] ?? '';
 $checkSection = HRISDB::getInstance()->getSectionID($username);
 
 //validations done in javascript
@@ -384,10 +384,19 @@ $EmpInfo = new EmpInfoBlank();
 
             //get all account data
             $result = HRISDB::getInstance()->get_employee_info_by_id($pkid);
-            $EmpInfo = mysqli_fetch_array($result);
-            
-            //get age using php
-            $EmpInfo['Age'] = GetAge($EmpInfo['DOBirth']);
+            $row = $result ? mysqli_fetch_array($result) : null;
+            if ($row)
+            {
+                $EmpInfo = $row;
+
+                //get age using php
+                $EmpInfo['Age'] = GetAge($EmpInfo['DOBirth']);
+            }
+            else
+            {
+                //no record for this pkid: leave the form blank
+                $message = 'Employee record not found';
+            }
         }
     }
     else //do nothing and leave all fields blank for creation of new employee
@@ -726,12 +735,12 @@ $EmpInfo = new EmpInfoBlank();
             <?php
                 //tags for the degree field autocomplete
                 $result = HRISDB::getInstance()->execute_search_query("SELECT Distinct(Degree) FROM tbl_EmployeeInfo WHERE Degree!=''");
-                $list = '';
-                while($row = mysqli_fetch_array($result))
+                $list = array();
+                while($result && ($row = mysqli_fetch_array($result)))
                 {
-                    $list .= '"'.$row['Degree'].'",';
+                    $list[] = json_encode((string)$row['Degree'], JSON_HEX_TAG | JSON_HEX_AMP);
                 }
-                echo substr($list,0,-1);
+                echo implode(',', $list);
             ?>
         ];
         //connect the autocomplete values from above to the degree textbox
@@ -743,12 +752,12 @@ $EmpInfo = new EmpInfoBlank();
             <?php
                 //tags for the degree field autocomplete
                 $result = HRISDB::getInstance()->execute_search_query("SELECT DISTINCT(Nature) FROM tbl_Disciplinary ORDER BY NATURE");
-                $list = '';
-                while($row = mysqli_fetch_array($result))
+                $list = array();
+                while($result && ($row = mysqli_fetch_array($result)))
                 {
-                    $list .= '"'.$row['Nature'].'",';
+                    $list[] = json_encode((string)$row['Nature'], JSON_HEX_TAG | JSON_HEX_AMP);
                 }
-                echo substr($list,0,-1);
+                echo implode(',', $list);
             ?>
         ];
 
@@ -756,12 +765,12 @@ $EmpInfo = new EmpInfoBlank();
             <?php
                 //tags for the degree field autocomplete
                 $result = HRISDB::getInstance()->execute_search_query("SELECT DISTINCT(Definition) FROM tbl_Disciplinary ORDER BY Definition");
-                $list = '';
-                while($row = mysqli_fetch_array($result))
+                $list = array();
+                while($result && ($row = mysqli_fetch_array($result)))
                 {
-                    $list .= '"'.$row['Definition'].'",';
+                    $list[] = json_encode((string)$row['Definition'], JSON_HEX_TAG | JSON_HEX_AMP);
                 }
-                echo substr($list,0,-1);
+                echo implode(',', $list);
             ?>
         ];
         console.log('offenseDefTags', offenseDefTags);
@@ -1263,8 +1272,8 @@ function showCat(fkCategory) {
         $array = '';
         while($row = mysqli_fetch_array($result))
         {
-            $DepartmentName = str_replace('"', '\"', $row['Department']);
-            $array .= 'new Array("'.$row['pkid'].'","'.$DepartmentName.'","'.$row['fkDivision'].'"),';
+            $f = JSON_HEX_TAG | JSON_HEX_AMP;
+            $array .= 'new Array('.json_encode((string)$row['pkid'], $f).','.json_encode((string)$row['Department'], $f).','.json_encode((string)$row['fkDivision'], $f).'),';
         }
         $array = substr_replace($array ,"",-1);
         echo $array;
@@ -1277,8 +1286,8 @@ function showCat(fkCategory) {
         $array = '';
         while($row = mysqli_fetch_array($result))
         {
-            $SectionName = str_replace('"', '\"', $row['Section']);
-            $array .= 'new Array("'.$row['pkid'].'","'.$SectionName.'","'.$row['fkDepartment'].'"),';
+            $f = JSON_HEX_TAG | JSON_HEX_AMP;
+            $array .= 'new Array('.json_encode((string)$row['pkid'], $f).','.json_encode((string)$row['Section'], $f).','.json_encode((string)$row['fkDepartment'], $f).'),';
         }
         $array = substr_replace($array ,"",-1);
         echo $array;

@@ -4,10 +4,10 @@
 	{
 		static $pdo = null;
 		if ($pdo === null) {
-			$host = getenv('HRIS_DB_HOST');
-			$name = getenv('HRIS_DB_NAME');
-			$user = getenv('HRIS_DB_USER');
-			$pass = getenv('HRIS_DB_PASS');
+			$host = getenv('localhost');
+			$name = getenv('db_hris');
+			$user = getenv('root');
+			$pass = getenv('sys!w@nDb123');
 			if ($user === false || $pass === false) {
 				throw new RuntimeException('HRIS_DB_USER or HRIS_DB_PASS is not set');
 			}
