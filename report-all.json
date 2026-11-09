@@ -7,6 +7,712 @@
     "fixes": [],
     "sql_backticks": null,
     "findings": [
-      
+        {
+            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\-1\\employeeinfo-1.php",
+            "line": 0,
+            "sev": "error",
+            "rule": "parse-error",
+            "msg": "does not parse on PHP 8.3: PHP Parse error:  Unclosed '{' on line 124 in \\\\SYSTEMONEV2\\WWW\\hris\\-1\\employeeinfo-1.php on line 125"
+        },
+        {
+            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\-1\\exportExcel (2).php",
+            "line": 214,
+            "sev": "error",
+            "rule": "mysql_*",
+            "msg": "ext/mysql removed in 7.0 -> PDO or mysqli with prepared statements (manual migration)"
+        },
+        {
+            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\-1\\exportExcel (2).php",
+            "line": 215,
+            "sev": "error",
+            "rule": "mysql_*",
+            "msg": "ext/mysql removed in 7.0 -> PDO or mysqli with prepared statements (manual migration)"
+        },
+        {
+            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\-1\\exportExcel (2).php",
+            "line": 215,
+            "sev": "error",
+            "rule": "mysql_*",
+            "msg": "ext/mysql removed in 7.0 -> PDO or mysqli with prepared statements (manual migration)"
+        },
+        {
+            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\-1\\exportExcel (2).php",
+            "line": 217,
+            "sev": "error",
+            "rule": "mysql_*",
+            "msg": "ext/mysql removed in 7.0 -> PDO or mysqli with prepared statements (manual migration)"
+        },
+        {
+            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\-1\\exportExcel (2).php",
+            "line": 218,
+            "sev": "error",
+            "rule": "mysql_*",
+            "msg": "ext/mysql removed in 7.0 -> PDO or mysqli with prepared statements (manual migration)"
+        },
+        {
+            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\-1\\exportExcel (2).php",
+            "line": 218,
+            "sev": "error",
+            "rule": "mysql_*",
+            "msg": "ext/mysql removed in 7.0 -> PDO or mysqli with prepared statements (manual migration)"
+        },
+        {
+            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\-1\\exportExcel (2).php",
+            "line": 220,
+            "sev": "error",
+            "rule": "mysql_*",
+            "msg": "ext/mysql removed in 7.0 -> PDO or mysqli with prepared statements (manual migration)"
+        },
+        {
+            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\-1\\exportExcel (2).php",
+            "line": 221,
+            "sev": "error",
+            "rule": "mysql_*",
+            "msg": "ext/mysql removed in 7.0 -> PDO or mysqli with prepared statements (manual migration)"
+        },
+        {
+            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\-1\\exportExcel (2).php",
+            "line": 221,
+            "sev": "error",
+            "rule": "mysql_*",
+            "msg": "ext/mysql removed in 7.0 -> PDO or mysqli with prepared statements (manual migration)"
+        },
+        {
+            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\-1\\exportExcel (2).php",
+            "line": 251,
+            "sev": "error",
+            "rule": "mysql_*",
+            "msg": "ext/mysql removed in 7.0 -> PDO or mysqli with prepared statements (manual migration)"
+        },
+        {
+            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\-1\\exportExcel (2).php",
+            "line": 254,
+            "sev": "error",
+            "rule": "mysql_*",
+            "msg": "ext/mysql removed in 7.0 -> PDO or mysqli with prepared statements (manual migration)"
+        },
+        {
+            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\-1\\exportExcel (2).php",
+            "line": 264,
+            "sev": "error",
+            "rule": "mysql_*",
+            "msg": "ext/mysql removed in 7.0 -> PDO or mysqli with prepared statements (manual migration)"
+        },
+        {
+            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\-1\\exportExcel (2).php",
+            "line": 268,
+            "sev": "error",
+            "rule": "mysql_*",
+            "msg": "ext/mysql removed in 7.0 -> PDO or mysqli with prepared statements (manual migration)"
+        },
+        {
+            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\-1\\exporttest.php",
+            "line": 26,
+            "sev": "error",
+            "rule": "mysql_*",
+            "msg": "ext/mysql removed in 7.0 -> PDO or mysqli with prepared statements (manual migration)"
+        },
+        {
+            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\-1\\exporttest.php",
+            "line": 27,
+            "sev": "error",
+            "rule": "mysql_*",
+            "msg": "ext/mysql removed in 7.0 -> PDO or mysqli with prepared statements (manual migration)"
+        },
+        {
+            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\-1\\exporttest.php",
+            "line": 27,
+            "sev": "error",
+            "rule": "mysql_*",
+            "msg": "ext/mysql removed in 7.0 -> PDO or mysqli with prepared statements (manual migration)"
+        },
+        {
+            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\-1\\exporttest.php",
+            "line": 29,
+            "sev": "error",
+            "rule": "mysql_*",
+            "msg": "ext/mysql removed in 7.0 -> PDO or mysqli with prepared statements (manual migration)"
+        },
+        {
+            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\-1\\exporttest.php",
+            "line": 30,
+            "sev": "error",
+            "rule": "mysql_*",
+            "msg": "ext/mysql removed in 7.0 -> PDO or mysqli with prepared statements (manual migration)"
+        },
+        {
+            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\-1\\exporttest.php",
+            "line": 30,
+            "sev": "error",
+            "rule": "mysql_*",
+            "msg": "ext/mysql removed in 7.0 -> PDO or mysqli with prepared statements (manual migration)"
+        },
+        {
+            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\-1\\exporttest.php",
+            "line": 32,
+            "sev": "error",
+            "rule": "mysql_*",
+            "msg": "ext/mysql removed in 7.0 -> PDO or mysqli with prepared statements (manual migration)"
+        },
+        {
+            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\-1\\exporttest.php",
+            "line": 33,
+            "sev": "error",
+            "rule": "mysql_*",
+            "msg": "ext/mysql removed in 7.0 -> PDO or mysqli with prepared statements (manual migration)"
+        },
+        {
+            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\-1\\exporttest.php",
+            "line": 33,
+            "sev": "error",
+            "rule": "mysql_*",
+            "msg": "ext/mysql removed in 7.0 -> PDO or mysqli with prepared statements (manual migration)"
+        },
+        {
+            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\-1\\exporttest.php",
+            "line": 74,
+            "sev": "error",
+            "rule": "mysql_*",
+            "msg": "ext/mysql removed in 7.0 -> PDO or mysqli with prepared statements (manual migration)"
+        },
+        {
+            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\dashboard\\class\\oop.php",
+            "line": 161,
+            "sev": "error",
+            "rule": "mssql_*",
+            "msg": "ext/mssql removed in 7.0 -> PDO_SQLSRV / sqlsrv_*"
+        },
+        {
+            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\dashboard\\class\\oop.php",
+            "line": 181,
+            "sev": "error",
+            "rule": "mssql_*",
+            "msg": "ext/mssql removed in 7.0 -> PDO_SQLSRV / sqlsrv_*"
+        },
+        {
+            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\excel\\Classes\\PHPExcel.php",
+            "line": 550,
+            "sev": "warn",
+            "rule": "unserialize()",
+            "msg": "never unserialize user input -> json_decode() or pass ['allowed_classes' => false]"
+        },
+        {
+            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\excel\\Classes\\PHPExcel\\Autoloader.php",
+            "line": 31,
+            "sev": "warn",
+            "rule": "removed-ini",
+            "msg": "ini directive \"mbstring.func_overload\" no longer exists in PHP 8 -> delete the call; its old behaviour is gone"
+        },
+        {
+            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\excel\\Classes\\PHPExcel\\CachedObjectStorage\\APC.php",
+            "line": 156,
+            "sev": "warn",
+            "rule": "unserialize()",
+            "msg": "never unserialize user input -> json_decode() or pass ['allowed_classes' => false]"
+        },
+        {
+            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\excel\\Classes\\PHPExcel\\CachedObjectStorage\\DiscISAM.php",
+            "line": 126,
+            "sev": "warn",
+            "rule": "unserialize()",
+            "msg": "never unserialize user input -> json_decode() or pass ['allowed_classes' => false]"
+        },
+        {
+            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\excel\\Classes\\PHPExcel\\CachedObjectStorage\\Memcache.php",
+            "line": 160,
+            "sev": "warn",
+            "rule": "unserialize()",
+            "msg": "never unserialize user input -> json_decode() or pass ['allowed_classes' => false]"
+        },
+        {
+            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\excel\\Classes\\PHPExcel\\CachedObjectStorage\\MemoryGZip.php",
+            "line": 98,
+            "sev": "warn",
+            "rule": "unserialize()",
+            "msg": "never unserialize user input -> json_decode() or pass ['allowed_classes' => false]"
+        },
+        {
+            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\excel\\Classes\\PHPExcel\\CachedObjectStorage\\MemorySerialized.php",
+            "line": 98,
+            "sev": "warn",
+            "rule": "unserialize()",
+            "msg": "never unserialize user input -> json_decode() or pass ['allowed_classes' => false]"
+        },
+        {
+            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\excel\\Classes\\PHPExcel\\CachedObjectStorage\\PHPTemp.php",
+            "line": 118,
+            "sev": "warn",
+            "rule": "unserialize()",
+            "msg": "never unserialize user input -> json_decode() or pass ['allowed_classes' => false]"
+        },
+        {
+            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\excel\\Classes\\PHPExcel\\CachedObjectStorage\\SQLite.php",
+            "line": 118,
+            "sev": "warn",
+            "rule": "unserialize()",
+            "msg": "never unserialize user input -> json_decode() or pass ['allowed_classes' => false]"
+        },
+        {
+            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\excel\\Classes\\PHPExcel\\CachedObjectStorage\\SQLite3.php",
+            "line": 121,
+            "sev": "warn",
+            "rule": "unserialize()",
+            "msg": "never unserialize user input -> json_decode() or pass ['allowed_classes' => false]"
+        },
+        {
+            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\excel\\Classes\\PHPExcel\\CachedObjectStorage\\Wincache.php",
+            "line": 160,
+            "sev": "warn",
+            "rule": "unserialize()",
+            "msg": "never unserialize user input -> json_decode() or pass ['allowed_classes' => false]"
+        },
+        {
+            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\excel\\Classes\\PHPExcel\\Calculation.php",
+            "line": 3599,
+            "sev": "info",
+            "rule": "E_USER_ERROR",
+            "msg": "trigger_error(E_USER_ERROR) deprecated in 8.4 -> throw an exception"
+        },
+        {
+            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\excel\\Classes\\PHPExcel\\Calculation\\DateTime.php",
+            "line": 498,
+            "sev": "warn",
+            "rule": "strftime()",
+            "msg": "deprecated in 8.1 -> date() / IntlDateFormatter"
+        },
+        {
+            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\excel\\Classes\\PHPExcel\\Calculation\\DateTime.php",
+            "line": 517,
+            "sev": "warn",
+            "rule": "strftime()",
+            "msg": "deprecated in 8.1 -> date() / IntlDateFormatter"
+        },
+        {
+            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\excel\\Classes\\PHPExcel\\Calculation\\DateTime.php",
+            "line": 520,
+            "sev": "warn",
+            "rule": "strftime()",
+            "msg": "deprecated in 8.1 -> date() / IntlDateFormatter"
+        },
+        {
+            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\excel\\Classes\\PHPExcel\\Calculation\\DateTime.php",
+            "line": 521,
+            "sev": "warn",
+            "rule": "strftime()",
+            "msg": "deprecated in 8.1 -> date() / IntlDateFormatter"
+        },
+        {
+            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\excel\\Classes\\PHPExcel\\Calculation\\Functions.php",
+            "line": 0,
+            "sev": "error",
+            "rule": "parse-error",
+            "msg": "does not parse on PHP 8.3: PHP Fatal error:  'break' not in the 'loop' or 'switch' context in \\\\SYSTEMONEV2\\WWW\\hris\\excel\\Classes\\PHPExcel\\Calculation\\Functions.php on line 574"
+        },
+        {
+            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\excel\\Classes\\PHPExcel\\Calculation\\TextData.php",
+            "line": 212,
+            "sev": "error",
+            "rule": "money_format()",
+            "msg": "removed in 8.0 -> NumberFormatter (intl)"
+        },
+        {
+            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\excel\\Classes\\PHPExcel\\Calculation\\TextData.php",
+            "line": 219,
+            "sev": "error",
+            "rule": "money_format()",
+            "msg": "removed in 8.0 -> NumberFormatter (intl)"
+        },
+        {
+            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\excel\\Classes\\PHPExcel\\Calculation\\TextData.php",
+            "line": 499,
+            "sev": "warn",
+            "rule": "param-order",
+            "msg": "required parameter after optional parameter (deprecated since 8.0) -> reorder or make required one nullable/defaulted"
+        },
+        {
+            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\excel\\Classes\\PHPExcel\\Chart\\Renderer\\jpgraph.php",
+            "line": 105,
+            "sev": "info",
+            "rule": "stripslashes()",
+            "msg": "magic_quotes were ON by default on many 5.3.10 installs; in 8.4 input is never escaped -> remove if it only undid magic quotes (check old php.ini)"
+        },
+        {
+            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\excel\\Classes\\PHPExcel\\NamedRange.php",
+            "line": 82,
+            "sev": "warn",
+            "rule": "param-order",
+            "msg": "required parameter after optional parameter (deprecated since 8.0) -> reorder or make required one nullable/defaulted"
+        },
+        {
+            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\excel\\Classes\\PHPExcel\\NamedRange.php",
+            "line": 228,
+            "sev": "warn",
+            "rule": "param-order",
+            "msg": "required parameter after optional parameter (deprecated since 8.0) -> reorder or make required one nullable/defaulted"
+        },
+        {
+            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\excel\\Classes\\PHPExcel\\Shared\\Drawing.php",
+            "line": 71,
+            "sev": "warn",
+            "rule": "param-order",
+            "msg": "required parameter after optional parameter (deprecated since 8.0) -> reorder or make required one nullable/defaulted"
+        },
+        {
+            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\excel\\Classes\\PHPExcel\\Shared\\Drawing.php",
+            "line": 99,
+            "sev": "warn",
+            "rule": "param-order",
+            "msg": "required parameter after optional parameter (deprecated since 8.0) -> reorder or make required one nullable/defaulted"
+        },
+        {
+            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\excel\\Classes\\PHPExcel\\Shared\\PCLZip\\pclzip.lib.php",
+            "line": 5347,
+            "sev": "error",
+            "rule": "set_magic_quotes_runtime()",
+            "msg": "removed in 7.0 -> delete the call"
+        },
+        {
+            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\excel\\Classes\\PHPExcel\\Shared\\PCLZip\\pclzip.lib.php",
+            "line": 5378,
+            "sev": "error",
+            "rule": "set_magic_quotes_runtime()",
+            "msg": "removed in 7.0 -> delete the call"
+        },
+        {
+            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\excel\\Classes\\PHPExcel\\Shared\\PDF\\fonts\\utils\\makefont.php",
+            "line": 62,
+            "sev": "error",
+            "rule": "set_magic_quotes_runtime()",
+            "msg": "removed in 7.0 -> delete the call"
+        },
+        {
+            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\excel\\Classes\\PHPExcel\\Shared\\PDF\\tcpdf.php",
+            "line": 7349,
+            "sev": "error",
+            "rule": "set_magic_quotes_runtime()",
+            "msg": "removed in 7.0 -> delete the call"
+        },
+        {
+            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\excel\\Classes\\PHPExcel\\Shared\\PDF\\tcpdf.php",
+            "line": 11638,
+            "sev": "error",
+            "rule": "mcrypt_*",
+            "msg": "ext/mcrypt removed in 7.2 -> openssl_* or sodium_*"
+        },
+        {
+            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\excel\\Classes\\PHPExcel\\Shared\\PDF\\tcpdf.php",
+            "line": 11687,
+            "sev": "error",
+            "rule": "mcrypt_*",
+            "msg": "ext/mcrypt removed in 7.2 -> openssl_* or sodium_*"
+        },
+        {
+            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\excel\\Classes\\PHPExcel\\Shared\\PDF\\tcpdf.php",
+            "line": 11687,
+            "sev": "error",
+            "rule": "mcrypt_*",
+            "msg": "ext/mcrypt removed in 7.2 -> openssl_* or sodium_*"
+        },
+        {
+            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\excel\\Classes\\PHPExcel\\Shared\\PDF\\tcpdf.php",
+            "line": 11688,
+            "sev": "error",
+            "rule": "mcrypt_*",
+            "msg": "ext/mcrypt removed in 7.2 -> openssl_* or sodium_*"
+        },
+        {
+            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\excel\\Classes\\PHPExcel\\Shared\\PDF\\tcpdf.php",
+            "line": 11747,
+            "sev": "error",
+            "rule": "mcrypt_*",
+            "msg": "ext/mcrypt removed in 7.2 -> openssl_* or sodium_*"
+        },
+        {
+            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\excel\\Classes\\PHPExcel\\Shared\\PDF\\tcpdf.php",
+            "line": 11748,
+            "sev": "error",
+            "rule": "mcrypt_*",
+            "msg": "ext/mcrypt removed in 7.2 -> openssl_* or sodium_*"
+        },
+        {
+            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\excel\\Classes\\PHPExcel\\Shared\\PDF\\tcpdf.php",
+            "line": 11798,
+            "sev": "error",
+            "rule": "mcrypt_*",
+            "msg": "ext/mcrypt removed in 7.2 -> openssl_* or sodium_*"
+        },
+        {
+            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\excel\\Classes\\PHPExcel\\Shared\\PDF\\tcpdf.php",
+            "line": 11799,
+            "sev": "error",
+            "rule": "mcrypt_*",
+            "msg": "ext/mcrypt removed in 7.2 -> openssl_* or sodium_*"
+        },
+        {
+            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\excel\\Classes\\PHPExcel\\Shared\\PDF\\tcpdf.php",
+            "line": 11853,
+            "sev": "error",
+            "rule": "mcrypt_*",
+            "msg": "ext/mcrypt removed in 7.2 -> openssl_* or sodium_*"
+        },
+        {
+            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\excel\\Classes\\PHPExcel\\Shared\\PDF\\tcpdf.php",
+            "line": 11854,
+            "sev": "error",
+            "rule": "mcrypt_*",
+            "msg": "ext/mcrypt removed in 7.2 -> openssl_* or sodium_*"
+        },
+        {
+            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\excel\\Classes\\PHPExcel\\Shared\\PDF\\tcpdf.php",
+            "line": 12011,
+            "sev": "error",
+            "rule": "mcrypt_*",
+            "msg": "ext/mcrypt removed in 7.2 -> openssl_* or sodium_*"
+        },
+        {
+            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\excel\\Classes\\PHPExcel\\Shared\\PDF\\tcpdf.php",
+            "line": 14139,
+            "sev": "error",
+            "rule": "each()",
+            "msg": "removed in 8.0 -> use foreach / key() / current()"
+        },
+        {
+            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\excel\\Classes\\PHPExcel\\Shared\\PDF\\tcpdf.php",
+            "line": 14752,
+            "sev": "warn",
+            "rule": "addslashes()",
+            "msg": "not a safe SQL escape -> bind parameters with PDO prepared statements"
+        },
+        {
+            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\excel\\Classes\\PHPExcel\\Shared\\PDF\\tcpdf.php",
+            "line": 14810,
+            "sev": "warn",
+            "rule": "addslashes()",
+            "msg": "not a safe SQL escape -> bind parameters with PDO prepared statements"
+        },
+        {
+            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\excel\\Classes\\PHPExcel\\Shared\\PDF\\tcpdf.php",
+            "line": 14937,
+            "sev": "warn",
+            "rule": "addslashes()",
+            "msg": "not a safe SQL escape -> bind parameters with PDO prepared statements"
+        },
+        {
+            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\excel\\Classes\\PHPExcel\\Shared\\PDF\\tcpdf.php",
+            "line": 14938,
+            "sev": "warn",
+            "rule": "addslashes()",
+            "msg": "not a safe SQL escape -> bind parameters with PDO prepared statements"
+        },
+        {
+            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\excel\\Classes\\PHPExcel\\Shared\\PDF\\tcpdf.php",
+            "line": 17870,
+            "sev": "warn",
+            "rule": "unserialize()",
+            "msg": "never unserialize user input -> json_decode() or pass ['allowed_classes' => false]"
+        },
+        {
+            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\excel\\Classes\\PHPExcel\\Shared\\PDF\\tcpdf.php",
+            "line": 18160,
+            "sev": "error",
+            "rule": "each()",
+            "msg": "removed in 8.0 -> use foreach / key() / current()"
+        },
+        {
+            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\excel\\Classes\\PHPExcel\\Shared\\PDF\\tcpdf.php",
+            "line": 18172,
+            "sev": "error",
+            "rule": "each()",
+            "msg": "removed in 8.0 -> use foreach / key() / current()"
+        },
+        {
+            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\excel\\Classes\\PHPExcel\\Shared\\PDF\\tcpdf.php",
+            "line": 18614,
+            "sev": "info",
+            "rule": "stripslashes()",
+            "msg": "magic_quotes were ON by default on many 5.3.10 installs; in 8.4 input is never escaped -> remove if it only undid magic quotes (check old php.ini)"
+        },
+        {
+            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\excel\\Classes\\PHPExcel\\Shared\\PDF\\tcpdf.php",
+            "line": 19288,
+            "sev": "error",
+            "rule": "create_function()",
+            "msg": "removed in 8.0 -> use closures / arrow functions"
+        },
+        {
+            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\excel\\Classes\\PHPExcel\\Shared\\PDF\\tcpdf.php",
+            "line": 19330,
+            "sev": "error",
+            "rule": "create_function()",
+            "msg": "removed in 8.0 -> use closures / arrow functions"
+        },
+        {
+            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\excel\\Classes\\PHPExcel\\Shared\\PDF\\tcpdf.php",
+            "line": 19342,
+            "sev": "error",
+            "rule": "create_function()",
+            "msg": "removed in 8.0 -> use closures / arrow functions"
+        },
+        {
+            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\excel\\Classes\\PHPExcel\\Shared\\PDF\\tcpdf.php",
+            "line": 19394,
+            "sev": "error",
+            "rule": "create_function()",
+            "msg": "removed in 8.0 -> use closures / arrow functions"
+        },
+        {
+            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\excel\\Classes\\PHPExcel\\Shared\\PDF\\tcpdf.php",
+            "line": 20690,
+            "sev": "warn",
+            "rule": "unserialize()",
+            "msg": "never unserialize user input -> json_decode() or pass ['allowed_classes' => false]"
+        },
+        {
+            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\excel\\Classes\\PHPExcel\\Shared\\PDF\\tcpdf.php",
+            "line": 22215,
+            "sev": "warn",
+            "rule": "unserialize()",
+            "msg": "never unserialize user input -> json_decode() or pass ['allowed_classes' => false]"
+        },
+        {
+            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\excel\\Classes\\PHPExcel\\Shared\\PDF\\tcpdf.php",
+            "line": 22277,
+            "sev": "warn",
+            "rule": "unserialize()",
+            "msg": "never unserialize user input -> json_decode() or pass ['allowed_classes' => false]"
+        },
+        {
+            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\excel\\Classes\\PHPExcel\\Shared\\PDF\\tcpdf.php",
+            "line": 22412,
+            "sev": "error",
+            "rule": "create_function()",
+            "msg": "removed in 8.0 -> use closures / arrow functions"
+        },
+        {
+            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\excel\\Classes\\PHPExcel\\Shared\\PDF\\tcpdf.php",
+            "line": 22555,
+            "sev": "error",
+            "rule": "create_function()",
+            "msg": "removed in 8.0 -> use closures / arrow functions"
+        },
+        {
+            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\excel\\Classes\\PHPExcel\\Shared\\String.php",
+            "line": 406,
+            "sev": "warn",
+            "rule": "utf8_encode()",
+            "msg": "deprecated in 8.2 -> mb_convert_encoding($s, \"UTF-8\", \"ISO-8859-1\")"
+        },
+        {
+            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\excel\\Classes\\PHPExcel\\Shared\\String.php",
+            "line": 406,
+            "sev": "warn",
+            "rule": "utf8_decode()",
+            "msg": "deprecated in 8.2 -> mb_convert_encoding($s, \"ISO-8859-1\", \"UTF-8\")"
+        },
+        {
+            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\excel\\Classes\\PHPExcel\\Shared\\trend\\trendClass.php",
+            "line": 87,
+            "sev": "warn",
+            "rule": "param-order",
+            "msg": "required parameter after optional parameter (deprecated since 8.0) -> reorder or make required one nullable/defaulted"
+        },
+        {
+            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\excel\\Classes\\PHPExcel\\Shared\\trend\\trendClass.php",
+            "line": 98,
+            "sev": "info",
+            "rule": "E_USER_ERROR",
+            "msg": "trigger_error(E_USER_ERROR) deprecated in 8.4 -> throw an exception"
+        },
+        {
+            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\excel\\Classes\\PHPExcel\\Worksheet.php",
+            "line": 1402,
+            "sev": "warn",
+            "rule": "param-order",
+            "msg": "required parameter after optional parameter (deprecated since 8.0) -> reorder or make required one nullable/defaulted"
+        },
+        {
+            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\excel\\Classes\\PHPExcel\\Worksheet.php",
+            "line": 2782,
+            "sev": "warn",
+            "rule": "unserialize()",
+            "msg": "never unserialize user input -> json_decode() or pass ['allowed_classes' => false]"
+        },
+        {
+            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\excel\\Classes\\PHPExcel\\Writer\\Excel2007\\Chart.php",
+            "line": 120,
+            "sev": "warn",
+            "rule": "param-order",
+            "msg": "required parameter after optional parameter (deprecated since 8.0) -> reorder or make required one nullable/defaulted"
+        },
+        {
+            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\excel\\Classes\\PHPExcel\\Writer\\Excel2007\\Chart.php",
+            "line": 164,
+            "sev": "warn",
+            "rule": "param-order",
+            "msg": "required parameter after optional parameter (deprecated since 8.0) -> reorder or make required one nullable/defaulted"
+        },
+        {
+            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\excel\\Classes\\PHPExcel\\Writer\\Excel2007\\Chart.php",
+            "line": 217,
+            "sev": "warn",
+            "rule": "param-order",
+            "msg": "required parameter after optional parameter (deprecated since 8.0) -> reorder or make required one nullable/defaulted"
+        },
+        {
+            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\excel\\Classes\\PHPExcel\\Writer\\Excel2007\\Chart.php",
+            "line": 1020,
+            "sev": "warn",
+            "rule": "param-order",
+            "msg": "required parameter after optional parameter (deprecated since 8.0) -> reorder or make required one nullable/defaulted"
+        },
+        {
+            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\excel\\Classes\\PHPExcel\\Writer\\Excel2007\\Drawing.php",
+            "line": 47,
+            "sev": "warn",
+            "rule": "param-order",
+            "msg": "required parameter after optional parameter (deprecated since 8.0) -> reorder or make required one nullable/defaulted"
+        },
+        {
+            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\excel\\Classes\\PHPExcel\\Writer\\Excel2007\\Rels.php",
+            "line": 291,
+            "sev": "warn",
+            "rule": "param-order",
+            "msg": "required parameter after optional parameter (deprecated since 8.0) -> reorder or make required one nullable/defaulted"
+        },
+        {
+            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\excel\\Classes\\PHPExcel\\Writer\\Excel2007\\Workbook.php",
+            "line": 299,
+            "sev": "warn",
+            "rule": "param-order",
+            "msg": "required parameter after optional parameter (deprecated since 8.0) -> reorder or make required one nullable/defaulted"
+        },
+        {
+            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\excel\\Classes\\PHPExcel\\Writer\\Excel2007\\Workbook.php",
+            "line": 315,
+            "sev": "warn",
+            "rule": "param-order",
+            "msg": "required parameter after optional parameter (deprecated since 8.0) -> reorder or make required one nullable/defaulted"
+        },
+        {
+            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\excel\\Classes\\PHPExcel\\Writer\\Excel5\\Workbook.php",
+            "line": 203,
+            "sev": "warn",
+            "rule": "param-order",
+            "msg": "required parameter after optional parameter (deprecated since 8.0) -> reorder or make required one nullable/defaulted"
+        },
+        {
+            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\includes\\mssql_pdo.php",
+            "line": 24,
+            "sev": "error",
+            "rule": "mssql_*",
+            "msg": "ext/mssql removed in 7.0 -> PDO_SQLSRV / sqlsrv_*"
+        },
+        {
+            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\includes\\mssql_pdo.php",
+            "line": 31,
+            "sev": "error",
+            "rule": "mssql_*",
+            "msg": "ext/mssql removed in 7.0 -> PDO_SQLSRV / sqlsrv_*"
+        }
     ]
 }
