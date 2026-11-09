@@ -128,10 +128,6 @@ $empNotUnique = false;
         //for dependents form
         //get value of tax dependent
         if($_POST["TaxDependent"]=='yes') $taxdep = 1; else $taxdep = 0;
-            $pkid = $_POST["EmployeeNo"];
-
-         echo $pkid;
-                exit;
 
         if($_POST["pkid"]!="")
         {
