@@ -56,12 +56,32 @@ function convertDateFromatViewing($date)
 
 //initialize empkid
 $pkid = "";
+$message = '';
+$empNotUnique = false;
 
     //get gor testing
     if ($_SERVER["REQUEST_METHOD"] == "POST")// || $_SERVER["REQUEST_METHOD"] == "GET")
     {
         ////////for development
         ////$_POST["pkid"] = $_GET["pkid"];
+
+        //default missing form fields to '' (PHP 8 raises "Undefined array key"; PHP 5.3 treated them as empty)
+        foreach (array('pkid', 'formtype', 'DateOfBirth', 'DateGraduated', 'DateHired', 'DepDateOfBirth',
+            'EffectivityDate', 'NotificationDate', 'EmployeeNo', 'TaxDependent',
+            'LastName', 'FirstName', 'MiddleName', 'NickName', 'Gender', 'CivilStatus', 'Spouse', 'TaxExemptionBase',
+            'CityAddStreet', 'CityAddBarangay', 'CityAdd', 'ProvAddressBarangay', 'ProvAddressMunicipality',
+            'ProvAddress', 'Telephone', 'IncomingShuttle', 'OutgoingShuttle', 'Remarks',
+            'HighestEducationalAttainment', 'SchoolAddress', 'DegreeObtained', 'HonorsAwards', 'GovernmentExams',
+            'Division', 'Department', 'Section', 'Position', 'EmploymentStatus', 'Status', 'SalaryType',
+            'SSS', 'TIN', 'PagIbig', 'PhilHealth', 'BloodType', 'ResEffectDate', 'ResReason',
+            'FatherName', 'MotherName', 'PersonToBeNotified',
+            'DepLastName', 'DepFirstName', 'DepMiddleName', 'Relationship', 'deppkid',
+            'Action', 'NatureOfOffense', 'DefinitionOfOffense', 'FrequencyOfOffense', 'Offensepkid',
+            'historyDivision', 'historyDepartment', 'historySection', 'historyPosition',
+            'historyFrom', 'historyTo', 'historypkid', 'tabIndex') as $postKey)
+        {
+            if (!isset($_POST[$postKey])) $_POST[$postKey] = '';
+        }
 
         //validate date fields
         if($_POST["DateOfBirth"]!='')
@@ -108,8 +128,10 @@ $pkid = "";
         //for dependents form
         //get value of tax dependent
         if($_POST["TaxDependent"]=='yes') $taxdep = 1; else $taxdep = 0;
+            $pkid = $_POST["EmployeeNo"];
 
-        
+         echo $pkid;
+                exit;
 
         if($_POST["pkid"]!="")
         {
@@ -595,8 +617,8 @@ $pkid = "";
 
         //get the selected tab
         var selectedTab = <?php 
-        if ($_POST["tabIndex"]!="") 
-            echo $_POST["tabIndex"];
+        if (isset($_POST["tabIndex"]) && $_POST["tabIndex"]!="") 
+            echo (int)$_POST["tabIndex"];
         else
             echo "0";
         ?>;
