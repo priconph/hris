@@ -6,7 +6,7 @@ $search = $_GET["search"] ?? '';
 $field = $_GET["field"] ?? '';
 $statusFilter = $_GET["status"] ?? '';
 
-require_once __DIR__ . '/../global_includes/hris-oop.php';
+require_once __DIR__ . '//global_includes/hris-oop.php';
 
 ?>
 

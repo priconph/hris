@@ -1,5 +1,5 @@
 <?php
-	require_once('../global_includes/hris-oop.php');
+	require_once('/global_includes/hris-oop.php');
 	
 	$sql = "SELECT pkid FROM tbl_Division WHERE Division = '" . $_POST['rosterOptions'] . "'";
 	$result = HRISDB::getinstance()->execute_search_query($sql);	

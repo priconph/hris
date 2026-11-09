@@ -44,7 +44,6 @@ class OOP extends mysqli
 		{
 			exit('Connect Error (' . mysqli_connect_errno() . ') ' . mysqli_connect_error());
 		}
-		// TODO: confirm table charset
 		$this->set_charset('utf8mb4');
 	}
 

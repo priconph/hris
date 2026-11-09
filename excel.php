@@ -1,6 +1,6 @@
 <?php
 
-require_once('../global_includes/hris-oop.php');
+require_once('/global_includes/hris-oop.php');
 
 //PhpSpreadsheet (installed with Composer)
 require_once __DIR__ . '/vendor/autoload.php';

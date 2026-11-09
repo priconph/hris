@@ -1,6 +1,6 @@
 <?php
 
-require_once('../global_includes/hris-oop.php');
+require_once('/global_includes/hris-oop.php');
 
 //include the main excel class
 require_once('excel/Classes/PHPExcel.php');

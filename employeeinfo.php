@@ -3,7 +3,7 @@
 //for layout testing
 $border = 0;
 
-require_once("../global_includes/hris-oop.php");
+require_once __DIR__ . '/global_includes/hris-oop.php';
 include_once 'db_hris.php';
 
 ob_start(); 
@@ -377,9 +377,9 @@ $pkid = "";
     <link href="src/hris.css" type="text/css" rel="stylesheet" media="all" />
     
     <!-- JQUERY -->
-    <link rel="stylesheet" type="text/css" href="../global_includes/jquery-1/css/custom-theme/jquery-ui-1.8.19.custom.css" />  
-    <script type="text/javascript" src="../global_includes/jquery-1/js/jquery-1.7.2.min.js"></script>
-    <script type="text/javascript" src="../global_includes/jquery-1/js/jquery-ui-1.8.19.custom.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="global_includes/jquery-1/css/custom-theme/jquery-ui-1.8.19.custom.css" />  
+    <script type="text/javascript" src="global_includes/jquery-1/js/jquery-1.7.2.min.js"></script>
+    <script type="text/javascript" src="global_includes/jquery-1/js/jquery-ui-1.8.19.custom.min.js"></script>
 	<script type="text/javascript" charset="utf8" src="http://ajax.aspnetcdn.com/ajax/jquery.dataTables/1.9.4/jquery.dataTables.min.js"></script>
 
     <!-- table sorter -->
