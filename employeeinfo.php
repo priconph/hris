@@ -63,7 +63,6 @@ $empNotUnique = false;
     if ($_SERVER["REQUEST_METHOD"] == "POST")// || $_SERVER["REQUEST_METHOD"] == "GET")
     {
         ////////for development
-        ////$_POST["pkid"] = $_GET["pkid"];
 
         //default missing form fields to '' (PHP 8 raises "Undefined array key"; PHP 5.3 treated them as empty)
         foreach (array('pkid', 'formtype', 'DateOfBirth', 'DateGraduated', 'DateHired', 'DepDateOfBirth',
@@ -128,6 +127,7 @@ $empNotUnique = false;
         //for dependents form
         //get value of tax dependent
         if($_POST["TaxDependent"]=='yes') $taxdep = 1; else $taxdep = 0;
+            $pkid = $_POST["EmployeeNo"];
 
         if($_POST["pkid"]!="")
         {
