@@ -8,7 +8,7 @@
 
 var Departments = new Array (<?php
 	//get all departments and put in javascript array
-	$result = HRISDB::getInstance()->execute_search_query("SELECT * FROM tbl_Department Where isActive = 1 ORDER BY Department");
+	$result = HRISDB::getInstance()->get_active_departments_all_columns();
 
 	$array = '';
 	while($row = mysqli_fetch_array($result))
@@ -22,7 +22,7 @@ var Departments = new Array (<?php
 
 var Sections = new Array(<?php
 	//get all sections and put in sections array
-	$result = HRISDB::getInstance()->execute_search_query("SELECT * FROM tbl_Section Where isActive = 1 ORDER BY Section");
+	$result = HRISDB::getInstance()->get_active_sections_all_columns();
 
 	$array = '';
 	while($row = mysqli_fetch_array($result))

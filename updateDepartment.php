@@ -5,7 +5,7 @@ require_once("../global_includes/hris-oop.php");
 //if get all, including inactive sections
 if($_GET['all']=='true')
 {
-	$result = HRISDB::getInstance()->execute_search_query("SELECT * FROM tbl_Department WHERE fkDivision='".$_GET['fkDivision']."' ORDER BY department ASC");
+	$result = HRISDB::getInstance()->get_all_departments_by_division($_GET['fkDivision']);
 }
 else
 {
