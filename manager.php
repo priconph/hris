@@ -1,6 +1,6 @@
 <?php
     
-    require_once("../global_includes/hris-oop.php");
+    require_once("global_includes/hris-oop.php");
 
     if ($_SERVER["REQUEST_METHOD"] == "POST")
     {

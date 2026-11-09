@@ -4,7 +4,7 @@
 
 	session_start();
 
-	require_once("../global_includes/hris-oop.php");
+	require_once("global_includes/hris-oop.php");
 
 //  echo  $_SESSION['username'];
 //   exit;

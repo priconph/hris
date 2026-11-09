@@ -1,20 +1,14 @@
 <?php
-	// Credentials come from the server environment, never from source.
+	// Credentials come from global_includes/db_env_hris.php, never from this file.
+	require_once __DIR__ . '/../global_includes/db_env_hris.php';
+
 	function getPdo(): PDO
 	{
 		static $pdo = null;
 		if ($pdo === null) {
-			$host = getenv('localhost');
-			$name = getenv('db_hris');
-			$user = getenv('root');
-			$pass = getenv('sys!w@nDb123');
-			if ($user === false || $pass === false) {
-				throw new RuntimeException('HRIS_DB_USER or HRIS_DB_PASS is not set');
-			}
+			[$host, $user, $pass, $name] = gi_hris_db_connect_args();
 			// TODO: confirm table charset
-			$dsn  = 'mysql:host=' . ($host !== false ? $host : 'localhost')
-				  . ';dbname=' . ($name !== false ? $name : 'db_hris')
-				  . ';charset=utf8mb4';
+			$dsn  = 'mysql:host=' . $host . ';dbname=' . $name . ';charset=utf8mb4';
 			$pdo = new PDO($dsn, $user, $pass, [
 				PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
 				PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
@@ -26,7 +20,7 @@
 
 	try {
 		$conn = getPdo();
-	} catch (PDOException | RuntimeException $e) {
+	} catch (PDOException $e) {
 		error_log('db_hris.php: ' . $e->getMessage());
 		die('Could not connect to the database.');
 	}

@@ -1,6 +1,6 @@
 <?php
 	require_once("includes.php");
-	require_once("../global_includes/hris-oop.php");
+	require_once("global_includes/hris-oop.php");
 	require_once 'db_hris.php';
 	
 ?>

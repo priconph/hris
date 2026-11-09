@@ -1,5 +1,5 @@
 <?php 
-		require_once("../global_includes/hris-oop.php");
+		require_once("global_includes/hris-oop.php");
 		$sql = array(
         //            array("SELECT EmpNo from tbl_EmployeeInfo "," AND EmpStatus = 1 ORDER BY EmpNo ASC "),
 		array("SELECT EmpNo, CONCAT(LastName, ', ', FirstName, ' (', MiddleName,')') as FullName, HiringStatus, SalaryType, fkPosition as Position, fkPosition as Classification, Gender from tbl_EmployeeInfo "," AND EmpStatus = 1 ORDER BY EmpNo ASC "),

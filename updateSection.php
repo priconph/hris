@@ -1,6 +1,6 @@
 <?php
 
-require_once("../global_includes/hris-oop.php");
+require_once("global_includes/hris-oop.php");
 
 //if get all, including inactive sections
 if($_GET['all']=='true')

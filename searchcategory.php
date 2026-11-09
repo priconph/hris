@@ -2,7 +2,7 @@
 $fkCategory = intval($_GET['fkCategory']);
 // $fkEmployee = intval($_GET['fkEmployee']);
 
-require_once("../global_includes/hris-oop.php");
+require_once("global_includes/hris-oop.php");
 
 ?>
 <!DOCTYPE html>

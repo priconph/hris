@@ -3,10 +3,15 @@
 //for layout testing
 $border = 0;
 
-require_once("../global_includes/hris-oop.php");
+require_once("global_includes/hris-oop.php");
 
+include_once 'db_hris.php';
+
+ob_start(); 
+session_start();
+$username = $_SESSION['username'] ?? '';
+$checkSection = HRISDB::getInstance()->getSectionID($username);
 //validations done in javascript
-
 function GetAge($bday)
 {
     $date = new DateTime($bday);
@@ -49,12 +54,41 @@ function convertDateFromatViewing($date)
     return $returnDate;
 }
 
+//returns '' for any missing column, so the form renders blank when no employee is loaded
+class EmpInfoBlank implements ArrayAccess
+{
+    private $data = array();
+    public function offsetExists($offset): bool { return isset($this->data[$offset]); }
+    public function offsetGet($offset): mixed { return $this->data[$offset] ?? ''; }
+    public function offsetSet($offset, $value): void { $this->data[$offset] = $value; }
+    public function offsetUnset($offset): void { unset($this->data[$offset]); }
+}
+
 //initialize empkid
 $pkid = "";
+$message = "";
+$EmpInfo = new EmpInfoBlank();
 
     //get gor testing
     if ($_SERVER["REQUEST_METHOD"] == "POST")// || $_SERVER["REQUEST_METHOD"] == "GET")
     {
+        //keys the handler below reads; a missing one behaves as '' (same as the old null)
+        $_POST += array_fill_keys(array(
+            'pkid', 'DateOfBirth', 'DateGraduated', 'DateHired', 'DepDateOfBirth', 'EffectivityDate',
+            'NotificationDate', 'EmployeeNo', 'TaxDependent', 'formtype', 'LastName', 'FirstName',
+            'MiddleName', 'NickName', 'Gender', 'CivilStatus', 'Spouse', 'TaxExemptionBase',
+            'CityAddStreet', 'CityAddBarangay', 'CityAdd', 'ProvAddressBarangay',
+            'ProvAddressMunicipality', 'ProvAddress', 'Telephone', 'IncomingShuttle',
+            'OutgoingShuttle', 'Remarks', 'HighestEducationalAttainment', 'SchoolAddress',
+            'DegreeObtained', 'HonorsAwards', 'GovernmentExams', 'Division', 'Department', 'Section',
+            'Position', 'EmploymentStatus', 'Status', 'SalaryType', 'SSS', 'TIN', 'PagIbig',
+            'PhilHealth', 'BloodType', 'ResEffectDate', 'ResReason', 'FatherName', 'MotherName',
+            'PersonToBeNotified', 'DepLastName', 'DepFirstName', 'DepMiddleName', 'Relationship',
+            'deppkid', 'Action', 'NatureOfOffense', 'DefinitionOfOffense', 'FrequencyOfOffense',
+            'Offensepkid', 'historyDivision', 'historyDepartment', 'historySection',
+            'historyPosition', 'historyFrom', 'historyTo', 'historypkid', 'tabIndex'
+        ), '');
+
         ////////for development
         ////$_POST["pkid"] = $_GET["pkid"];
 
@@ -110,7 +144,10 @@ $pkid = "";
         {
             //get pkid
             $pkid = $_POST["pkid"];
-            
+            // echo $pkid;
+
+            //this form has no product line field: keep the employee's current one for the HRISDB methods that take it
+            $curPL = (string)HRISDB::getInstance()->get_employee_product_line($pkid);
 
             if($_POST["EmployeeNo"]!="")
             {
@@ -163,11 +200,12 @@ $pkid = "";
                     $_POST["Division"],
                     $_POST["Department"],
                     $_POST["Section"],
+                    $curPL,
                     $_POST["Position"]
                     ))
                 {
-                    //insert into employment history table if there is change detected
-                    HRISDB::getInstance()->add_employee_history($pkid,$_POST["Division"],$_POST["Department"],$_POST["Section"],$_POST["Position"],date("Y-m-d"),'Present');
+                //insert into employment history table if there is change detected
+                HRISDB::getInstance()->add_employee_history($pkid,$_POST["Division"],$_POST["Department"],$_POST["Section"],$curPL,$_POST["Position"],date("Y-m-d"),'Present');
                 }
 
                 //update employee employment status
@@ -179,12 +217,16 @@ $pkid = "";
                     $_POST["Department"],
                     $_POST["SalaryType"],
                     $_POST["Section"],
+                    $curPL,
                     $_POST["SSS"],
                     $_POST["Position"],
                     $_POST["TIN"],
                     $_POST["PagIbig"],
                     $DOHired,
-                   $_POST["PhilHealth"]);
+                   	$_POST["PhilHealth"],
+					$_POST["BloodType"],
+					$_POST["ResEffectDate"],
+					$_POST["ResReason"]);
 
                 //update family info
                 HRISDB::getInstance()->update_employee_family($pkid,$_POST["FatherName"],
@@ -249,7 +291,8 @@ $pkid = "";
                     $_POST["FrequencyOfOffense"],
                     $_POST["NotificationDate"],
                     $_POST["EffectivityDate"],
-                    $_POST["Offensepkid"]);
+                    $_POST["Offensepkid"],
+                    $_POST["DefinitionOfOffense"]);
 
                 $message = 'Offense saved';
             }
@@ -270,11 +313,13 @@ $pkid = "";
                     $_POST["FrequencyOfOffense"],
                     $_POST["NotificationDate"],
                     $_POST["EffectivityDate"],
-                    $pkid);
+                    $pkid,
+                    $_POST["DefinitionOfOffense"]);
 
                 $message = 'Offense added';
             }
-
+			
+	
             //create employment history info
             else if ($_POST["formtype"]=="addHistory")
             {
@@ -283,7 +328,7 @@ $pkid = "";
                     $_POST["historyTo"] = 'Present';
                 }
 
-                HRISDB::getInstance()->add_employee_history($pkid,$_POST["historyDivision"],$_POST["historyDepartment"],$_POST["historySection"],$_POST["historyPosition"],$_POST["historyFrom"],$_POST["historyTo"]);
+                HRISDB::getInstance()->add_employee_history($pkid,$_POST["historyDivision"],$_POST["historyDepartment"],$_POST["historySection"],$curPL,$_POST["historyPosition"],$_POST["historyFrom"],$_POST["historyTo"]);
                 $message = 'Employment History Added';
             }
 
@@ -294,7 +339,7 @@ $pkid = "";
                 {
                     $_POST["historyTo"] = 'Present';
                 }
-                HRISDB::getInstance()->update_employee_history($_POST["historypkid"],$_POST["historyDivision"],$_POST["historyDepartment"],$_POST["historySection"],$_POST["historyPosition"],$_POST["historyFrom"],$_POST["historyTo"]);
+                HRISDB::getInstance()->update_employee_history($_POST["historypkid"],$_POST["historyDivision"],$_POST["historyDepartment"],$_POST["historySection"],$curPL,$_POST["historyPosition"],$_POST["historyFrom"],$_POST["historyTo"]);
                 $message = 'Employment History edited';
             }
 
@@ -344,18 +389,27 @@ $pkid = "";
 
             //get all account data
             $result = HRISDB::getInstance()->get_employee_info_by_id($pkid);
-            $EmpInfo = mysqli_fetch_array($result);
-            
-            //get age using php
-            $EmpInfo['Age'] = GetAge($EmpInfo['DOBirth']);
+            $row = $result ? mysqli_fetch_array($result) : null;
+            if ($row)
+            {
+                $EmpInfo = $row;
+
+                //get age using php
+                $EmpInfo['Age'] = GetAge($EmpInfo['DOBirth']);
+            }
+            else
+            {
+                //no record for this pkid: leave the form blank
+                $message = 'Employee record not found';
+            }
         }
     }
     else //do nothing and leave all fields blank for creation of new employee
     {
         $message = 'Create new employee';
     }
+	 
 ?>
-
 
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
@@ -369,6 +423,7 @@ $pkid = "";
     <link rel="stylesheet" type="text/css" href="../global_includes/jquery-1/css/custom-theme/jquery-ui-1.8.19.custom.css" />  
     <script type="text/javascript" src="../global_includes/jquery-1/js/jquery-1.7.2.min.js"></script>
     <script type="text/javascript" src="../global_includes/jquery-1/js/jquery-ui-1.8.19.custom.min.js"></script>
+	<script type="text/javascript" charset="utf8" src="http://ajax.aspnetcdn.com/ajax/jquery.dataTables/1.9.4/jquery.dataTables.min.js"></script>
 
     <!-- table sorter -->
     <script type="text/javascript" src="includes/Event.js"></script>
@@ -421,6 +476,24 @@ $pkid = "";
         return false;
     }
 
+	//validate empty textboxes SCANNED 
+    function validateEmpFileForm()
+    {
+        error = false;
+        validateTextBox('filecat', 'AlertFileCat');
+
+        if(!error)
+        {
+            document.getElementById('alertScannedFile').innerHTML = '';
+            return true;
+        }
+        else
+        {
+            document.getElementById('alertScannedFile').innerHTML = 'Please fill up the required fields';
+        }
+        return false;
+    }
+	
     function validateForm()
     {
         error = false;
@@ -541,7 +614,7 @@ $pkid = "";
         //241 for ñ
         //209 for Ñ
         //055 for dash (-)
-        if ((charCode < 65 || charCode > 90) && (charCode < 97 || charCode > 122) && (charCode != 32) && (charCode != 46) && (charCode != 44) && (charCode != 241) && (charCode != 209) && (charCode != 055))
+        if ((charCode < 65 || charCode > 90) && (charCode < 97 || charCode > 122) && (charCode != 32) && (charCode != 46) && (charCode != 053) && (charCode != 44) && (charCode != 241) && (charCode != 209) && (charCode != 055))
             return false;
         return true;
     }
@@ -565,8 +638,8 @@ $pkid = "";
 
         //get the selected tab
         var selectedTab = <?php 
-        if ($_POST["tabIndex"]!="") 
-            echo $_POST["tabIndex"];
+        if (($_POST["tabIndex"] ?? "")!="") 
+            echo (int)$_POST["tabIndex"];
         else
             echo "0";
         ?>;
@@ -607,7 +680,8 @@ $pkid = "";
         $( "#datepickerGrad" ).datepicker({ yearRange: "-100:+0", changeMonth: true, changeYear: true, maxDate: "+0D"});
         });
         $(function() {
-        $( "#datepickerHired" ).datepicker({ yearRange: "-100:+0", changeMonth: true, changeYear: true, maxDate: "+0D"});
+        // $( "#datepickerHired" ).datepicker({ yearRange: "-100:+0", changeMonth: true, changeYear: true, maxDate: "+0D"}); // Commented as of 3/20/2025 by whyRainbowDoesntHaveBlack
+        $( "#datepickerHired" ).datepicker({ yearRange: "-100:+0", changeMonth: true, changeYear: true, maxDate: "+14D"});
         });
         $(function() {
         $( "#datepickerNotif" ).datepicker({ yearRange: "-100:+0", changeMonth: true, changeYear: true, maxDate: "+0D"});
@@ -665,13 +739,13 @@ $pkid = "";
         var adegreeObtainedTags = [
             <?php
                 //tags for the degree field autocomplete
-                $result = HRISDB::getInstance()->execute_search_query("SELECT Distinct(Degree) FROM tbl_EmployeeInfo WHERE Degree!=''");
-                $list = '';
-                while($row = mysqli_fetch_array($result))
+                $result = HRISDB::getInstance()->get_distinct_degrees();
+                $list = array();
+                while($result && ($row = mysqli_fetch_array($result)))
                 {
-                    $list .= '"'.$row['Degree'].'",';
+                    $list[] = json_encode((string)$row['Degree'], JSON_HEX_TAG | JSON_HEX_AMP);
                 }
-                echo substr($list,0,-1);
+                echo implode(',', $list);
             ?>
         ];
         //connect the autocomplete values from above to the degree textbox
@@ -682,18 +756,35 @@ $pkid = "";
         var offenseTags = [
             <?php
                 //tags for the degree field autocomplete
-                $result = HRISDB::getInstance()->execute_search_query("SELECT DISTINCT(Nature) FROM tbl_Disciplinary ORDER BY NATURE");
-                $list = '';
-                while($row = mysqli_fetch_array($result))
+                $result = HRISDB::getInstance()->get_distinct_offense_natures();
+                $list = array();
+                while($result && ($row = mysqli_fetch_array($result)))
                 {
-                    $list .= '"'.$row['Nature'].'",';
+                    $list[] = json_encode((string)$row['Nature'], JSON_HEX_TAG | JSON_HEX_AMP);
                 }
-                echo substr($list,0,-1);
+                echo implode(',', $list);
             ?>
         ];
+
+        var offenseDefTags = [
+            <?php
+                //tags for the degree field autocomplete
+                $result = HRISDB::getInstance()->get_distinct_offense_definitions();
+                $list = array();
+                while($result && ($row = mysqli_fetch_array($result)))
+                {
+                    $list[] = json_encode((string)$row['Definition'], JSON_HEX_TAG | JSON_HEX_AMP);
+                }
+                echo implode(',', $list);
+            ?>
+        ];
+        console.log('offenseDefTags', offenseDefTags);
         //connect the autocomplete values from above to the degree textbox
         $( "#NatureOfOffense" ).autocomplete({
             source: offenseTags
+        });
+        $( "#DefinitionOfOffense" ).autocomplete({
+            source: offenseDefTags
         });
 
         $("#Present").change(function(){
@@ -821,6 +912,30 @@ $pkid = "";
         trainingTable.onmove = myTable.colorize;
         trainingTable.colorize();
 
+		
+		 var ScannedTable = new SortedTable('sortedScanned');
+
+        //sorted table colorization
+        ScannedTable.colorize = function() {
+        for (var i=0;i<this.elements.length;i++) {
+            if (i%2) {
+              this.changeClass(this.elements[i],'even','odd');
+            } else {
+              this.changeClass(this.elements[i],'odd','even');
+            }
+          }
+        }
+
+        ScannedTable.onselect = function(element)
+        {
+             SortedTable.getSortedTable(document.getElementById('row1')).cleanselect();
+        }
+
+        ScannedTable.onsort = myTable.colorize;
+        ScannedTable.onmove = myTable.colorize;
+        ScannedTable.colorize();
+
+		
         var myOffenseTable = new SortedTable('sortedOffense');
         
         //sorted table colorization
@@ -859,12 +974,21 @@ $pkid = "";
             });
 
             //inser all values of selected dependent into the textboxes
-            document.EmployeeInfo['Action'].value = rows[6][this.elementIndex(element)];
+            // document.EmployeeInfo['Action'].value = rows[6][this.elementIndex(element)];
+            // document.EmployeeInfo['NatureOfOffense'].value = rows[1][this.elementIndex(element)];
+            // document.EmployeeInfo['FrequencyOfOffense'].value = rows[7][this.elementIndex(element)];
+            // document.EmployeeInfo['EffectivityDate'].value = rows[3][this.elementIndex(element)];
+            // document.EmployeeInfo['NotificationDate'].value = rows[4][this.elementIndex(element)];
+            // document.EmployeeInfo['Offensepkid'].value = rows[5][this.elementIndex(element)];
+
+
+            document.EmployeeInfo['Action'].value = rows[7][this.elementIndex(element)];
             document.EmployeeInfo['NatureOfOffense'].value = rows[1][this.elementIndex(element)];
-            document.EmployeeInfo['FrequencyOfOffense'].value = rows[7][this.elementIndex(element)];
-            document.EmployeeInfo['EffectivityDate'].value = rows[3][this.elementIndex(element)];
-            document.EmployeeInfo['NotificationDate'].value = rows[4][this.elementIndex(element)];
-            document.EmployeeInfo['Offensepkid'].value = rows[5][this.elementIndex(element)];
+            document.EmployeeInfo['DefinitionOfOffense'].value = rows[2][this.elementIndex(element)];
+            document.EmployeeInfo['FrequencyOfOffense'].value = rows[8][this.elementIndex(element)];
+            document.EmployeeInfo['EffectivityDate'].value = rows[4][this.elementIndex(element)];
+            document.EmployeeInfo['NotificationDate'].value = rows[5][this.elementIndex(element)];
+            document.EmployeeInfo['Offensepkid'].value = rows[6][this.elementIndex(element)];
 
             //hide add button
             document.EmployeeInfo['Offensedeletes'].style.display = 'inline-block';
@@ -878,6 +1002,7 @@ $pkid = "";
             //remove values
             document.EmployeeInfo['Action'].value = "1";
             document.EmployeeInfo['NatureOfOffense'].value = "";
+            document.EmployeeInfo['DefinitionOfOffense'].value = "";
             document.EmployeeInfo['FrequencyOfOffense'].value = "1";
             document.EmployeeInfo['EffectivityDate'].value = "";
             document.EmployeeInfo['NotificationDate'].value = "";
@@ -889,6 +1014,7 @@ $pkid = "";
             document.EmployeeInfo['Offenseoks'].style.display = 'none';
         }
 
+	        
         //for employment history table
         var historyTable = new SortedTable('sortedHistory');
         
@@ -906,8 +1032,6 @@ $pkid = "";
         historyTable.onsort = historyTable.colorize;
         historyTable.onmove = historyTable.colorize;
         historyTable.colorize();
-
-
 
         historyTable.onselect = function(element)
         {
@@ -930,7 +1054,6 @@ $pkid = "";
             });
             });
 
-
             //inser all values of selected dependent into the textboxes
             document.EmployeeInfo['historyPosition'].value = rows[6][this.elementIndex(element)];
             document.EmployeeInfo['historyDivision'].value = rows[7][this.elementIndex(element)];
@@ -939,7 +1062,6 @@ $pkid = "";
             updateSectionListHistory();
             document.EmployeeInfo['historySection'].value = rows[9][this.elementIndex(element)];
             document.EmployeeInfo['historyFrom'].value = rows[4][this.elementIndex(element)];
-
 
             if(rows[5][this.elementIndex(element)]=='Present')
             {
@@ -979,6 +1101,30 @@ $pkid = "";
             document.EmployeeInfo['addHistory'].style.display = 'inline-block';
             document.EmployeeInfo['editHistory'].style.display = 'none';
         }
+		
+	
+        var appraisalTable = new SortedTable('sortedAppraisal');
+
+        //sorted table colorization
+        appraisalTable.colorize = function() {
+        for (var i=0;i<this.elements.length;i++) {
+            if (i%2) {
+              this.changeClass(this.elements[i],'even','odd');
+            } else {
+              this.changeClass(this.elements[i],'odd','even');
+            }
+          }
+        }
+
+        appraisalTable.onselect = function(element)
+        {
+             //this.cleansort();
+             SortedTable.getSortedTable(document.getElementById('row1')).cleanselect();
+        }
+
+        appraisalTable.onsort = myTable.colorize;
+        appraisalTable.onmove = myTable.colorize;
+        appraisalTable.colorize();
     }
 
     function validateDependentFields()
@@ -1041,6 +1187,7 @@ $pkid = "";
         
         validateTextBox('NotificationDate', 'AlertNotificationDate');
         validateTextBox('NatureOfOffense', 'AlertNatureOfOffense');
+        validateTextBox('DefinitionOfOffense', 'AlertDefinitionOfOffense');
         validateTextBox('EffectivityDate', 'AlertEffectivityDate');
 
         //validateTextBox('Action', 'AlertAction');
@@ -1097,15 +1244,41 @@ $pkid = "";
       }
     }
 
+// function showCat(pkid) {
+function showCat(fkCategory) {
+// function showCat(fkCategory,fkEmployee) {
+
+  // if (pkid == "") {
+  if (fkCategory == "") {
+    document.getElementById("sortedScanned").innerHTML="";
+    return;
+  } 
+     
+  if (window.XMLHttpRequest) {
+    xmlhttp=new XMLHttpRequest();
+  } else { 
+    xmlhttp=new ActiveXObject("Microsoft.XMLHTTP");
+  }
+  xmlhttp.onreadystatechange=function() {
+    if (xmlhttp.readyState==4 && xmlhttp.status==200) {
+      document.getElementById("sortedScanned").innerHTML=xmlhttp.responseText;
+    }
+  }
+  // xmlhttp.open("GET","searchcategory.php?pkid="+pkid,true);
+  xmlhttp.open("GET","searchcategory.php?fkCategory="+fkCategory,true);
+  // xmlhttp.open("GET","searchcategory.php?fkCategory="+fkCategory+"&fkEmployee="+fkEmployee,true);
+  xmlhttp.send();
+}
+	
     var Departments = new Array (<?php
         //get all departments and put in javascript array
-        $result = HRISDB::getInstance()->execute_search_query("SELECT * FROM tbl_Department Where isActive = 1 ORDER BY Department");
+        $result = HRISDB::getInstance()->get_active_departments_all_columns();
 
         $array = '';
         while($row = mysqli_fetch_array($result))
         {
-            $DepartmentName = str_replace('"', '\"', $row['Department']);
-            $array .= 'new Array("'.$row['pkid'].'","'.$DepartmentName.'","'.$row['fkDivision'].'"),';
+            $f = JSON_HEX_TAG | JSON_HEX_AMP;
+            $array .= 'new Array('.json_encode((string)$row['pkid'], $f).','.json_encode((string)$row['Department'], $f).','.json_encode((string)$row['fkDivision'], $f).'),';
         }
         $array = substr_replace($array ,"",-1);
         echo $array;
@@ -1113,13 +1286,13 @@ $pkid = "";
 
     var Sections = new Array(<?php
         //get all sections and put in sections array
-        $result = HRISDB::getInstance()->execute_search_query("SELECT * FROM tbl_Section Where isActive = 1 ORDER BY Section");
+        $result = HRISDB::getInstance()->get_active_sections_all_columns();
 
         $array = '';
         while($row = mysqli_fetch_array($result))
         {
-            $SectionName = str_replace('"', '\"', $row['Section']);
-            $array .= 'new Array("'.$row['pkid'].'","'.$SectionName.'","'.$row['fkDepartment'].'"),';
+            $f = JSON_HEX_TAG | JSON_HEX_AMP;
+            $array .= 'new Array('.json_encode((string)$row['pkid'], $f).','.json_encode((string)$row['Section'], $f).','.json_encode((string)$row['fkDepartment'], $f).'),';
         }
         $array = substr_replace($array ,"",-1);
         echo $array;
@@ -1157,7 +1330,6 @@ function updateSectionList()
         }
     }
 }
-
 
     function updateDepartmentListHistory()
     {
@@ -1199,15 +1371,50 @@ function updateSectionList()
             document.getElementById(id).remove(j);
         }
     }
-    // onload="updateDepartmentList(document.getElementById('Division').value);">
-    </script>
+	
+	$(document).ready(function () {
+		$('#scannedFile').on('submit',(function(e) {	
+		e.preventDefault();
+		var data_1 =  new FormData(this);
+			data_1.append('fkEmployee', $('#fkEmployee').val());
+			data_1.append('fkCategory', $('#filecat').val());
+	$.ajax({
+		   url: "uploads.php",    	
+		   // url: "convert_pdf_to_jpg.php",    	
+		   type: "POST",            
+		   data: data_1, 	
+		   contentType: false,      	
+		   cache: false,          	
+		   processData:false,       	
+		   success: function(data)  	
+		   {
+				alert(data);
+				window.location.reload();
+			   }, error : function (data) {
+				alert('Error found!');
+			   }
+		});
+	}));
+}); // end document 
 
+	</script>
+	<script type = 'text/javascript'>
+		function toggleResignation() {
+			var e = document.getElementById("toggler");
+			var strUser = e.options[e.selectedIndex].text;
+			if (strUser == 'Active' || strUser == 'Rehired') {
+				document.getElementById('resignInfo').style.visibility = 'hidden';
+			} else {
+				document.getElementById('resignInfo').style.visibility = 'visible';
+			}
+		}
+	</script>
 </head>
 
 <body>
 
     <h2>HRIS System</h2>
-    <h3>Employee Information</h3>
+    <h3>Employee Information  <?php echo "(" . $EmpInfo['LastName'] . ", " . $EmpInfo['FirstName'] . " " . $EmpInfo['MiddleName'] . ") [" . $EmpInfo['EmpNo'] . "]"; ?></h3>
 
     <div class="transbox">
 
@@ -1237,13 +1444,12 @@ function updateSectionList()
                         <li><a href="#tabs-5">Disciplinary History</a></li>
                         <li><a href="#tabs-6">Training Records</a></li>
                         <li><a href="#tabs-7">Employment History</a></li>
+                        <li><a href="#tabs-8">Appraisal</a></li>
+                        <li><a href="#tabs-9">Scanned 201 File</a></li>
                     </ul>
-                    <div id="tabs-1">
-                    
                     <!-- Personal Background -->
-                        
+                    <div id="tabs-1">
                         <h4 class="group_title">Personal Information</h4>
-
                         <table class="transbox" border="<?php echo $border ?>">
                             <tr>
                                 <td>
@@ -1279,7 +1485,8 @@ function updateSectionList()
                                         </tr>
 
                                         <tr>
-                                            <?php if($EmpInfo['EmpStatus']==2) echo '<td colspan="2"><font color="red" size="18">RESIGNED</font></td>'; ?>
+                                            <?php if($EmpInfo['EmpStatus']==2) { echo '<td colspan="2"><font color="red" size="18">RESIGNED</font></td>'; } 
+													else if($EmpInfo['EmpStatus']==3) { echo '<td colspan="2"><font color="red" size="18">REHIRED</font></td>'; } ?>
                                         </tr>
 
                                     </table>
@@ -1440,9 +1647,9 @@ function updateSectionList()
                                                     <option value="4" <?php if($EmpInfo['Incoming']==4)echo 'selected="true"' ?>>Alabang</option>
                                                     <option value="5" <?php if($EmpInfo['Incoming']==5)echo 'selected="true"' ?>>Mamatid</option>
                                                     <option value="6"<?php if($EmpInfo['Incoming']==6)echo 'selected="true"' ?>>Mayapa/Real</option>
-                                                    <!-- -->
+                                                    <!-- 
                                                         <option value="7" <?php if($EmpInfo['Incoming']==7)echo 'selected="true"' ?>>Calamba</option>
-                                                    <!-- -->
+                                                     -->
                                                 </select>
                                             </td>
                                             <td>Outgoing Shuttle Service:</td>
@@ -1455,9 +1662,9 @@ function updateSectionList()
                                                     <option value="4" <?php if($EmpInfo['Outgoing']==4)echo 'selected="true"' ?>>Alabang</option>
                                                     <option value="5" <?php if($EmpInfo['Outgoing']==5)echo 'selected="true"' ?>>Mamatid</option>
                                                     <option value="6" <?php if($EmpInfo['Outgoing']==6)echo 'selected="true"' ?>>Mayapa/Real</option>
-                                                    <!-- -->
+                                                    <!-- 
                                                         <option value="7" <?php if($EmpInfo['Outgoing']==7)echo 'selected="true"' ?>>Calamba</option>
-                                                    <!-- -->
+                                                     -->
                                                 </select>
                                             </td>
                                         </tr>
@@ -1480,10 +1687,8 @@ function updateSectionList()
                         </table>
                         <br>
                     </div>
+                    <!-- Family Infornation -->
                     <div id="tabs-2">
-
-                        <!-- Family Infornation -->
-
                         <h4 class="group_title">Immediate Family</h4>
 
                         <table class="transbox" border="<?php echo $border ?>">
@@ -1553,7 +1758,7 @@ function updateSectionList()
                                                 <td axis="number" headers="dob"><?php 
                                                     if($pkid!="")
                                                     {
-                                                        if ($EmpInfo['DOBirth']!='0000-00-00'){
+                                                        if ($row['DoBirth']!='0000-00-00'){
                                                         $date = new DateTime($row['DoBirth']);
                                                         echo $date->format('m/d/Y');}
                                                     }
@@ -1597,9 +1802,9 @@ function updateSectionList()
                                                 <?php
                                                 //get corresponding value for tax dependent
                                                 if($row['TaxDependent']==1)
-                                                    $taxdep = yes;
+                                                    $taxdep = 'yes';
                                                 else
-                                                    $taxdep = no;
+                                                    $taxdep = 'no';
                                                 ?>
 
                                                 <td axis="string" headers="dep" align="center"><?php echo $taxdep ?></td>
@@ -1708,12 +1913,9 @@ function updateSectionList()
                                 </tr>
                             <!-- </form> -->
                         </table>
-
                     </div>
+                    <!-- Educational Background -->
                     <div id="tabs-3">
-
-                        <!-- Educational Background -->
-
                         <table class="transbox" border="<?php echo $border ?>">
                             <tr>
                                 <td>Highest Educational Attainment:</td>
@@ -1721,7 +1923,8 @@ function updateSectionList()
                                     <select name="HighestEducationalAttainment" style="width:420px">
                                         <option value="1" <?php if($EmpInfo['HighestEduc']==1)echo 'selected="true"' ?>>High School Graduate</option>
                                         <option value="2" <?php if($EmpInfo['HighestEduc']==2)echo 'selected="true"' ?>>Vocational Graduate</option>
-                                        <option value="3" <?php if($EmpInfo['HighestEduc']==3)echo 'selected="true"' ?>>College Level</option>
+                                        <option value="6" <?php if($EmpInfo['HighestEduc']==6)echo 'selected="true"' ?>>Vocational Level</option>
+										<option value="3" <?php if($EmpInfo['HighestEduc']==3)echo 'selected="true"' ?>>College Level</option>
                                         <option value="4" <?php if($EmpInfo['HighestEduc']==4)echo 'selected="true"' ?>>Post Graduate</option>
                                         <option value="5" <?php if($EmpInfo['HighestEduc']==5)echo 'selected="true"' ?>>College Graduate</option>
                                     </select>
@@ -1769,19 +1972,14 @@ function updateSectionList()
                                 </td>
                             </tr>
                         </table>
-
-
-
                     </div>
+                    <!-- Employment Information -->
                     <div id="tabs-4">
-
-                        <!-- Employment Information -->
-
                         <table class="transbox" border="<?php echo $border ?>">
                             <tr>
                                 <td>Employee#:</td>
                                 <td><input type="text" maxlength="8" onkeypress="return isLetterAndNumberKey(event)" name="EmployeeNo" style="width:300px" value="<?php echo $EmpInfo['EmpNo'] ?>"/></td>
-                                <td>Employment Category:</td>
+                                <td>Salary Type:</td>
                                 <td>
                                     <select name="EmploymentStatus" style="width:250px">
                                         <option value="1" <?php if($EmpInfo['HiringStatus']==1)echo 'selected="true"' ?>>Contractual</option>
@@ -1820,12 +2018,41 @@ function updateSectionList()
                                     </script>
                                 </td>
                                 <td>Employment Status:</td>
-                                <td>
-                                    <select name="Status" style="width:250px">
-                                        <option value="1" <?php if($EmpInfo['EmpStatus']==1)echo 'selected="true"'; ?>>Active</option>
-                                        <option value="2" <?php if($EmpInfo['EmpStatus']==2)echo 'selected="true"'; ?>>Resigned</option>
-                                    </select>
-                                </td>
+								<?php 
+									if ($EmpInfo['EmpStatus'] == '1') {
+										echo "<td>";
+										echo "<select name='Status' id = 'toggler' onchange = 'toggleResignation();' style='width:250px'>";
+										echo "<option value = '1' selected>Active</option>";
+										echo "<option value = '2'>Resigned</option>";
+										echo "<option value = '3'>Rehired</option>";
+										echo "</select>";
+										echo "</td>";
+									} else if ($EmpInfo['EmpStatus'] == '2') {
+										echo "<td>";
+										echo "<select name='Status' id = 'toggler' onchange = 'toggleResignation();' style='width:250px'>";
+										echo "<option value = '1'>Active</option>";
+										echo "<option value = '2' selected>Resigned</option>";
+										echo "<option value = '3'>Rehired</option>";
+										echo "</select>";
+										echo "</td>";
+									} else if ($EmpInfo['EmpStatus'] == '3') {
+										echo "<td>";
+										echo "<select name='Status' id = 'toggler' onchange = 'toggleResignation();' style='width:250px'>";
+										echo "<option value = '1'>Active</option>";
+										echo "<option value = '2'>Resigned</option>";
+										echo "<option value = '3' selected>Rehired</option>";
+										echo "</select>";
+										echo "</td>";
+									} else {
+										echo "<td>";
+										echo "<select name='Status' id = 'toggler' onchange = 'toggleResignation();' style='width:250px'>";
+										echo "<option value = '1' selected>Active</option>";
+										echo "<option value = '2'>Resigned</option>";
+										echo "<option value = '3'>Rehired</option>";
+										echo "</select>";
+										echo "</td>";
+									}
+								?>
                             </tr>
 
                             <tr>
@@ -1854,7 +2081,7 @@ function updateSectionList()
                                             //echo $count;
                                             for ($i=1; $i <= $count; $i++) {
                                                 ?>
-                                                <option value="<?php echo $i ?>" <?php if($EmpInfo['SalaryType'] == $i)echo 'selected="true"' ?>><? echo HRISDB::getInstance()->get_salary_type_by_id($i);?></option>
+                                                <option value="<?php echo $i ?>" <?php if($EmpInfo['SalaryType'] == $i)echo 'selected="true"' ?>><?php echo HRISDB::getInstance()->get_salary_type_by_id($i);?></option>
                                                 <?php
                                             }
                                         ?>
@@ -1923,21 +2150,39 @@ function updateSectionList()
                             </tr>
 
                             <tr>
-                                <td></td>
-                                <td></td>
+                                <td>Blood Type:</td>
+                                <td><input type="text" maxlength="3" name="BloodType" style="width:300px" onkeypress="return isLetterKey(event)" value="<?php echo $EmpInfo['BloodType'] ?>"/></td>
                                 <td>PhilHealth #:</td>
                                 <td>
                                     <input type="text" maxlength="20" name="PhilHealth" style="width:250px" onkeypress="return isNumberKey(event)" value="<?php echo $EmpInfo['PhilHealth'] ?>"/>
                                 </td>
                             </tr>
                         </table>
-
-
+						<br />
+						<?php 
+							if ($EmpInfo['EmpStatus'] == '1') {
+								echo "<table class = 'transbox' id = 'resignInfo' style = 'visibility: hidden;'>";
+							} else if ($EmpInfo['EmpStatus'] == '2') {
+								echo "<table class = 'transbox' id = 'resignInfo' style = 'visibility: visible;'>";
+							} else if ($EmpInfo['EmpStatus'] == '3') {
+								echo "<table class = 'transbox' id = 'resignInfo' style = 'visibility: hidden;'>";
+							} 
+						?>
+							<tr>
+								<th colspan = '2'>Resignation Information</th>
+							</tr>
+							<tr>
+								<td>Effectivity Date:</td>
+								<td><input type = 'date' name = 'ResEffectDate' value = '<?php echo $EmpInfo['Effectivity']; ?>'></td>
+							</tr>
+							<tr>
+								<td>Reason:</td>
+								<td><textarea cols = '98px' name = 'ResReason' rows = '5px'><?php echo $EmpInfo['Reason']; ?></textarea></td>
+							</tr>
+						</table>
                     </div>
+                    <!-- Disciplinary History -->
                     <div id="tabs-5">
-
-                        <!-- Disciplinary History -->
-
                         <!-- yes no delete dialog -->
                         <div id="dialogDeleteOffense" title="Delete Offense">
                             <p>Are you sure you want to delete this Offense?</p>
@@ -1955,6 +2200,7 @@ function updateSectionList()
                                             <tr>
                                                 <th id="action" title="click to sort by last name">Action</th>
                                                 <th id="nature" title="click to sort by nature of offense">Nature</th>
+                                                <th id="definition" title="click to sort by definition of offense">Definition</th>
                                                 <th id="freq" title="click to sort by frequency of offense">Frequency of Offense</th>
                                                 <th id="effect" title="click to sort by effectivity date">Effectivity</th>
                                                 <th id="notif" title="click to sort by notification">Notification</th>
@@ -2008,6 +2254,7 @@ function updateSectionList()
                                                 }
                                                 ?></td>
                                                 <td axis="string" headers="nature"><?php echo $row['Nature'] ?></td>
+                                                <td axis="string" headers="definition"><?php echo $row['Definition'] ?></td>
                                                 <td axis="string" headers="freq"><center><?php 
 
                                                 switch ($row['Frequency'] ) {
@@ -2115,6 +2362,15 @@ function updateSectionList()
                                                 <font color="red"><text id='AlertEffectivityDate'></text></font>
                                             </td>
                                         </tr>
+                                        <!-- 08022025 by Nessa -->
+                                        <tr>
+                                            <td>Definition of Offense:</td>
+                                            <td>
+                                                <!-- <input type="text"  maxlength="1000" name="DefinitionOfOffense" id="DefinitionOfOffense"/> -->
+                                                <textarea cols="50" maxlength="1000" rows="2" name="DefinitionOfOffense"></textarea>
+                                                <font color="red"><text id='AlertDefinitionOfOffense'></text></font>
+                                            </td>
+                                        </tr>
 
                                         <tr>
                                             <td>Frequency of Offense:</td>
@@ -2145,9 +2401,7 @@ function updateSectionList()
                             </tr>
                         </table>
                     </div>
-
                     <!-- training records tab -->
-
                     <div id="tabs-6">
                         <table class="sorted" id="sortedTrainings" border="1">
                             <thead>
@@ -2167,7 +2421,7 @@ function updateSectionList()
                                 <?php
 
                                 //$EmpNo = HRISDB::getInstance()->get_employee_no_by_pkid($pkid);
-                                $result = HRISDB::getInstance()->get_trainings_by_employee_id($pkid);
+                                $result = HRISDB::getInstance()->get_trainings_by_employee_id($pkid, $username,1);
                                 $TrainingCounter = 0;
                                 while($row = mysqli_fetch_array($result)):
                                     $TrainingCounter++;
@@ -2175,14 +2429,14 @@ function updateSectionList()
                                     <tr>
                                         <td axis="string" headers="period" title="<?php
 
-                                        $date = new DateTime($row['Period']);
+                                        $date = new DateTime($row['PeriodFrom']);
                                         echo $date->format('F j, Y');
 
                                         ?>"><?php
                                         
-                                        $date = new DateTime($row['Period']);
-                                        echo $date->format('Y/m/d');
-
+                                        // $date = new DateTime($row['Period']);
+                                        // echo $date->format('Y/m/d');
+										echo date('Y/m/d', strtotime($row['PeriodFrom'])).'-'.date('Y/m/d', strtotime($row['PeriodTo']));
                                          ?></td>
                                         <td axis="string" headers="title" ><?php echo $row['Title'] ?></td>
                                         <td axis="string" headers="objective" ><?php echo $row['Objective'] ?></td>
@@ -2205,9 +2459,7 @@ function updateSectionList()
                             </tbody>
                         </table>
                     </div>
-
                     <!-- Employment History -->
-
                     <div id="tabs-7">
 
                         <table class="sorted" id="sortedHistory">
@@ -2226,7 +2478,7 @@ function updateSectionList()
                                 <?php
 
                                 //die("SELECT * FROM tbl_EmploymentHistory WHERE fkEmployee = ".$EmpInfo['pkid']);
-                                $result = HRISDB::getInstance()->execute_search_query("SELECT * FROM tbl_EmploymentHistory WHERE fkEmployee = ".$EmpInfo['pkid']." ORDER BY pkid DESC ");//DateStart DESC
+                                $result = HRISDB::getInstance()->get_employment_history_by_employee($EmpInfo['pkid']);//DateStart DESC
 
                                 $counter = 0;
                                 while($row = mysqli_fetch_array($result))
@@ -2348,11 +2600,11 @@ function updateSectionList()
                                 <td>
                                 To Date:
                                 </td>
-                                <td>
-                                <input type="text" name="historyTo" id="historyTo" class="historyTo" maxlength="10">
-                                <font color="red"><text id='AlertHisTo'></text></font>
-                                <input type="checkbox" id="Present" name="Present" value="Yes" title="use present"/> Present 
-                                </td>
+									<td>
+									<input type="text" name="historyTo" id="historyTo" class="historyTo" maxlength="10">
+									<font color="red"><text id='AlertHisTo'></text></font>
+									<input type="checkbox" id="Present" name="Present" value="Yes" title="use present"/> Present 
+									</td>
                             </tr>
                             <tr>
                                 <input type="hidden" name="historypkid" id="historypkid">
@@ -2367,18 +2619,176 @@ function updateSectionList()
                         <input type="button" name="deleteHistory" style="display: none; " value="Delete" onclick="document.EmployeeInfo['formtype'].value = 'deleteHistory';document.EmployeeInfo.submit();" class="ui-button ui-widget ui-state-default ui-corner-all">
                         <br>
                     </div>
-                </div>
+                    
+					<!-- Appraisal History tab -->
+                    <div id="tabs-8">
+                        <table class="sorted" id="sortedTrainings" border="1" style="width:100%">
+                            <thead>
+                                <tr>
+                                    <th id="rating" class="sortedplus" title="click to sort by rating" style="width:20%">Rating</th>
+                                    <th id="position" title="click to sort by position" style="width:15%">Position</th>
+                                    <th id="from" title="click to sort by evaluation date from" style="width:13%">From</th>
+                                    <th id="to" title="click to sort by evaluation date to" style="width:13%">To</th>
+                                    <th id="effectivity_date" title="click to sort by effectivity date" style="width:13%">Effectivity Date</th>
+                                    <th id="purpose" title="click to sort by purpose" style="width:15%">Purpose</th>
+                                    <th id="rated_by" title="click to sort by rater" style="width:25%">Rated by</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php
+                                $result_appraisal = PAS::getInstance()->get_appraisal_record($EmpInfo['EmpNo']);
+                                while($row = mysqli_fetch_array($result_appraisal)):
+                                    ?>
+                                    <tr>                                        
+                                        <td axis="string" headers="rating" style="width:20%"><center><?php echo $row['rating']; ?></center></td>
+                                        <td axis="string" headers="position" style="width:15%"><center><?php echo $row['position']; ?></center></td>
+                                        <td axis="string" headers="from" style="width:13%"><center><?php echo date('M d, Y',strtotime($row['evaluation_from'])); ?></center></td>
+                                        <td axis="string" headers="to" style="width:13%"><center><?php echo date('M d, Y',strtotime($row['evaluation_to'])); ?></center></td>
+                                        <td axis="string" headers="effectivity_date" style="width:13%"><center><?php echo date('M d, Y',strtotime($row['effectivity_date'])); ?></center></td>
+                                        <td axis="string" headers="purpose" style="width:15%"><center><?php echo $row['purpose']; ?></center></td>
+                                        <td axis="string" headers="rated_by" style="width:20%"><center><?php echo $row['rated_by']; ?></center></td>
+                                    </tr>
+                                    <?php
+                                endwhile;
+
+                                if($result_appraisal->num_rows == 0)
+                                {
+                                  ?><tfoot><td colspan="7" align="center"><i>No Appraisal Record Found</i></td></tfoot><?php
+                                }
+
+                                //mysql_free_result($result);
+                                ?>
+                            </tbody>
+                        </table>
+                    </div>
+				<!-- Employee 201 File -->
+                    <div id="tabs-9">
+				<!-- Search 201 Category -->
+						 <table class="transbox" border="<?php echo $border ?>" style="width: 50%;">
+						   <tr>
+								<td rowspan="2">Search For 201 File Category: </td>
+								<td rowspan="2">
+									<input type="hidden" id="fkEmployee" value="<?php echo $pkid?>"> 
+									<select name="search_fileCat" id="search_fileCat" size="1" onchange="showCat(this.value)" style="width:280px">
+										<option></option>
+										<?php
+											//get list of divisions and select current value
+											$result = HRISDB::getInstance()->get_201FileCategory();
+											while($row = mysqli_fetch_array($result))
+											{
+												?>
+												<option value="<?php echo $row['pkid'] ?>"><?php echo htmlentities($systemID = $row['empfilecategory']) ?></option>
+												<?php
+											}
+										?>
+									</select>
+								</td>
+							</tr>
+							</table>                                
+						 <br>	
+				<!-- 201 Table -->	
+						<button type="button" id="upload_file">Upload File</button>
+						<br>
+						<br>
+						<table class="sorted" id="sortedScanned" style="width: 50%;">
+                            <thead>
+                                <tr align="center">
+				                    <th id="fileCat">201 File Category</th>
+                                    <th id="file_Name">File Name</th>
+                                    <th id="fileView">View</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+
+                                <?php
+									$result = HRISDB::getInstance()->get_uploaded_file($EmpInfo);
+									$FileCatCounter = 0;
+									while($row = mysqli_fetch_array($result)):
+									$FileCatCounter++;
+									{
+										echo '<tr align="center">';
+										echo '<td style="display:none" id="pkid">'.$row['pkid'].'</td>';
+										echo '<td headers="fileCat">'.$row['empfilecategory'].'</td>';
+										echo '<td headers="file_Name">'.$row['file_name'].'</td>';
+										echo '<td><a href="pdfuploads/'.$row['pkid'].'" target="_blank">View File</a></td>';
+										echo '</tr>';
+									}
+                                ?>
+                                <?php
+									endwhile;
+
+									if($FileCatCounter==0)
+									{
+									  ?><tfoot><td colspan="3" align="center">No 201 File Records</td></tfoot><?php
+									}
+                                ?>
+                            </tbody>
+							</table>
+
+                    </div>	
+                    
+			   </div>
             </div>
                 <input type="hidden" name="formtype" value="">
                 <input type="hidden" name="tabIndex" value="">
                 <input type="hidden" name="pkid" value="<?php echo $pkid ?>">
                 <font color="red"><text id='Alerts'></text></font><br>
 
-                &nbsp<input type="button" id="button" value="Save" onClick="validateForm();" class="ui-button ui-widget ui-state-default ui-corner-all"/>
+                &nbsp; <input type="button" id="button" value="Save" onClick="validateForm();" class="ui-button ui-widget ui-state-default ui-corner-all"/>
                 <input type="button" id="button" value="Employee List" onClick="window.location = 'index.php'" class="ui-button ui-widget ui-state-default ui-corner-all"/>
                 
             </form>
         </div>
-    </div>
+	
+<div class="wrap" id="uploadfile_modal" title="Upload Employee 201 File">
+	<form id="scannedFile" method="post" enctype="multipart/form-data">
+	<!--	<input type="text" id="fkUploadFile" value=""> 
+		<input type="hidden" id="fkUploadFile" value="<?php //echo $pkid?>">-->
+		<input type="hidden" id="fkEmployee" value="<?php echo $pkid?>">
+		
+		<br>		
+		<label for="fileCat">Select Employee 201 Category: </label>
+			<select name="filecat" id="filecat" size="1" style="width:300px" size="1" class="text ui-widget-content ui-corner-all" required>
+				<option></option>
+				<?php
+					$result = HRISDB::getInstance()->get_201FileCategory();
+					while($row = mysqli_fetch_array($result))
+					{
+					?>
+						<option value="<?php echo $row['pkid'] ?>"><?php echo htmlentities($systemID = $row['empfilecategory']) ?></option>
+					<?php
+					}
+				?>
+			</select>
+			<br>
+			<br>
+			<br>
+	<input type="file" name="files[]" multiple="multiple">
+	<br>
+	<br>
+	<br>
+	<input type="submit" value="Upload">
+	</form>
+</div>
+
+<script>
+	$("#uploadfile_modal").dialog({
+	   autoOpen: false,
+	   show: "blind",
+	   hide: "fade",
+   	   width:"600px",
+	   position: ["bottom",150],
+	   dialogClass: 'no-close'
+	 });
+	  
+	$(function() {
+		$( "#upload_file" )
+		.button()
+		.click(function() {
+			$( "#uploadfile_modal" ).dialog( "open" );
+		});
+	});
+</script>
+
 </body>
 </html>

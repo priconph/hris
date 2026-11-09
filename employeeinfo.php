@@ -8,7 +8,7 @@ include_once 'db_hris.php';
 
 ob_start(); 
 session_start();
-$username = $_SESSION['username'] ?? '';
+$username = $_SESSION['username'];
 $checkSection = HRISDB::getInstance()->getSectionID($username);
 
 //validations done in javascript
@@ -54,41 +54,12 @@ function convertDateFromatViewing($date)
     return $returnDate;
 }
 
-//returns '' for any missing column, so the form renders blank when no employee is loaded
-class EmpInfoBlank implements ArrayAccess
-{
-    private $data = array();
-    public function offsetExists($offset): bool { return isset($this->data[$offset]); }
-    public function offsetGet($offset): mixed { return $this->data[$offset] ?? ''; }
-    public function offsetSet($offset, $value): void { $this->data[$offset] = $value; }
-    public function offsetUnset($offset): void { unset($this->data[$offset]); }
-}
-
 //initialize empkid
 $pkid = "";
-$message = "";
-$EmpInfo = new EmpInfoBlank();
 
     //get gor testing
     if ($_SERVER["REQUEST_METHOD"] == "POST")// || $_SERVER["REQUEST_METHOD"] == "GET")
     {
-        //keys the handler below reads; a missing one behaves as '' (same as the old null)
-        $_POST += array_fill_keys(array(
-            'pkid', 'DateOfBirth', 'DateGraduated', 'DateHired', 'DepDateOfBirth', 'EffectivityDate',
-            'NotificationDate', 'EmployeeNo', 'TaxDependent', 'formtype', 'LastName', 'FirstName',
-            'MiddleName', 'NickName', 'Gender', 'CivilStatus', 'Spouse', 'TaxExemptionBase',
-            'CityAddStreet', 'CityAddBarangay', 'CityAdd', 'ProvAddressBarangay',
-            'ProvAddressMunicipality', 'ProvAddress', 'Telephone', 'IncomingShuttle',
-            'OutgoingShuttle', 'Remarks', 'HighestEducationalAttainment', 'SchoolAddress',
-            'DegreeObtained', 'HonorsAwards', 'GovernmentExams', 'Division', 'Department', 'Section',
-            'Position', 'EmploymentStatus', 'Status', 'SalaryType', 'SSS', 'TIN', 'PagIbig',
-            'PhilHealth', 'BloodType', 'ResEffectDate', 'ResReason', 'FatherName', 'MotherName',
-            'PersonToBeNotified', 'DepLastName', 'DepFirstName', 'DepMiddleName', 'Relationship',
-            'deppkid', 'Action', 'NatureOfOffense', 'DefinitionOfOffense', 'FrequencyOfOffense',
-            'Offensepkid', 'historyDivision', 'historyDepartment', 'historySection',
-            'historyPosition', 'historyFrom', 'historyTo', 'historypkid', 'tabIndex'
-        ), '');
-
         ////////for development
         ////$_POST["pkid"] = $_GET["pkid"];
 
@@ -384,19 +355,10 @@ $EmpInfo = new EmpInfoBlank();
 
             //get all account data
             $result = HRISDB::getInstance()->get_employee_info_by_id($pkid);
-            $row = $result ? mysqli_fetch_array($result) : null;
-            if ($row)
-            {
-                $EmpInfo = $row;
-
-                //get age using php
-                $EmpInfo['Age'] = GetAge($EmpInfo['DOBirth']);
-            }
-            else
-            {
-                //no record for this pkid: leave the form blank
-                $message = 'Employee record not found';
-            }
+            $EmpInfo = mysqli_fetch_array($result);
+            
+            //get age using php
+            $EmpInfo['Age'] = GetAge($EmpInfo['DOBirth']);
         }
     }
     else //do nothing and leave all fields blank for creation of new employee
@@ -633,8 +595,8 @@ $EmpInfo = new EmpInfoBlank();
 
         //get the selected tab
         var selectedTab = <?php 
-        if (($_POST["tabIndex"] ?? "")!="") 
-            echo (int)$_POST["tabIndex"];
+        if ($_POST["tabIndex"]!="") 
+            echo $_POST["tabIndex"];
         else
             echo "0";
         ?>;
@@ -735,12 +697,12 @@ $EmpInfo = new EmpInfoBlank();
             <?php
                 //tags for the degree field autocomplete
                 $result = HRISDB::getInstance()->execute_search_query("SELECT Distinct(Degree) FROM tbl_EmployeeInfo WHERE Degree!=''");
-                $list = array();
-                while($result && ($row = mysqli_fetch_array($result)))
+                $list = '';
+                while($row = mysqli_fetch_array($result))
                 {
-                    $list[] = json_encode((string)$row['Degree'], JSON_HEX_TAG | JSON_HEX_AMP);
+                    $list .= '"'.$row['Degree'].'",';
                 }
-                echo implode(',', $list);
+                echo substr($list,0,-1);
             ?>
         ];
         //connect the autocomplete values from above to the degree textbox
@@ -752,12 +714,12 @@ $EmpInfo = new EmpInfoBlank();
             <?php
                 //tags for the degree field autocomplete
                 $result = HRISDB::getInstance()->execute_search_query("SELECT DISTINCT(Nature) FROM tbl_Disciplinary ORDER BY NATURE");
-                $list = array();
-                while($result && ($row = mysqli_fetch_array($result)))
+                $list = '';
+                while($row = mysqli_fetch_array($result))
                 {
-                    $list[] = json_encode((string)$row['Nature'], JSON_HEX_TAG | JSON_HEX_AMP);
+                    $list .= '"'.$row['Nature'].'",';
                 }
-                echo implode(',', $list);
+                echo substr($list,0,-1);
             ?>
         ];
 
@@ -765,12 +727,12 @@ $EmpInfo = new EmpInfoBlank();
             <?php
                 //tags for the degree field autocomplete
                 $result = HRISDB::getInstance()->execute_search_query("SELECT DISTINCT(Definition) FROM tbl_Disciplinary ORDER BY Definition");
-                $list = array();
-                while($result && ($row = mysqli_fetch_array($result)))
+                $list = '';
+                while($row = mysqli_fetch_array($result))
                 {
-                    $list[] = json_encode((string)$row['Definition'], JSON_HEX_TAG | JSON_HEX_AMP);
+                    $list .= '"'.$row['Definition'].'",';
                 }
-                echo implode(',', $list);
+                echo substr($list,0,-1);
             ?>
         ];
         console.log('offenseDefTags', offenseDefTags);
@@ -1272,8 +1234,8 @@ function showCat(fkCategory) {
         $array = '';
         while($row = mysqli_fetch_array($result))
         {
-            $f = JSON_HEX_TAG | JSON_HEX_AMP;
-            $array .= 'new Array('.json_encode((string)$row['pkid'], $f).','.json_encode((string)$row['Department'], $f).','.json_encode((string)$row['fkDivision'], $f).'),';
+            $DepartmentName = str_replace('"', '\"', $row['Department']);
+            $array .= 'new Array("'.$row['pkid'].'","'.$DepartmentName.'","'.$row['fkDivision'].'"),';
         }
         $array = substr_replace($array ,"",-1);
         echo $array;
@@ -1286,8 +1248,8 @@ function showCat(fkCategory) {
         $array = '';
         while($row = mysqli_fetch_array($result))
         {
-            $f = JSON_HEX_TAG | JSON_HEX_AMP;
-            $array .= 'new Array('.json_encode((string)$row['pkid'], $f).','.json_encode((string)$row['Section'], $f).','.json_encode((string)$row['fkDepartment'], $f).'),';
+            $SectionName = str_replace('"', '\"', $row['Section']);
+            $array .= 'new Array("'.$row['pkid'].'","'.$SectionName.'","'.$row['fkDepartment'].'"),';
         }
         $array = substr_replace($array ,"",-1);
         echo $array;
@@ -1753,7 +1715,7 @@ function updateSectionList()
                                                 <td axis="number" headers="dob"><?php 
                                                     if($pkid!="")
                                                     {
-                                                        if ($row['DoBirth']!='0000-00-00'){
+                                                        if ($EmpInfo['DOBirth']!='0000-00-00'){
                                                         $date = new DateTime($row['DoBirth']);
                                                         echo $date->format('m/d/Y');}
                                                     }
@@ -1797,9 +1759,9 @@ function updateSectionList()
                                                 <?php
                                                 //get corresponding value for tax dependent
                                                 if($row['TaxDependent']==1)
-                                                    $taxdep = 'yes';
+                                                    $taxdep = yes;
                                                 else
-                                                    $taxdep = 'no';
+                                                    $taxdep = no;
                                                 ?>
 
                                                 <td axis="string" headers="dep" align="center"><?php echo $taxdep ?></td>

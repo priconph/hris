@@ -1,5 +1,5 @@
 {
-    "php": "8.3.4",
+    "php": "8.4.27",
     "source": "5.3.10",
     "target": "8.4.27",
     "mode": "dry-run",
@@ -699,6 +699,258 @@
             "sev": "warn",
             "rule": "param-order",
             "msg": "required parameter after optional parameter (deprecated since 8.0) -> reorder or make required one nullable/defaulted"
+        },
+        {
+            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\global_includes\\hris-oop - ORIGINAL.php",
+            "line": 30,
+            "sev": "info",
+            "rule": "E_USER_ERROR",
+            "msg": "trigger_error(E_USER_ERROR) deprecated in 8.4 -> throw an exception"
+        },
+        {
+            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\global_includes\\hris-oop - ORIGINAL.php",
+            "line": 35,
+            "sev": "info",
+            "rule": "E_USER_ERROR",
+            "msg": "trigger_error(E_USER_ERROR) deprecated in 8.4 -> throw an exception"
+        },
+        {
+            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\global_includes\\hris-oop3.php",
+            "line": 0,
+            "sev": "error",
+            "rule": "parse-error",
+            "msg": "does not parse on PHP 8.3: PHP Parse error:  Unmatched '}' in \\\\SYSTEMONEV2\\WWW\\hris\\global_includes\\hris-oop3.php on line 2143"
+        },
+        {
+            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\global_includes\\hris-oop_copy_05082019.php",
+            "line": 29,
+            "sev": "info",
+            "rule": "E_USER_ERROR",
+            "msg": "trigger_error(E_USER_ERROR) deprecated in 8.4 -> throw an exception"
+        },
+        {
+            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\global_includes\\hris-oop_copy_05082019.php",
+            "line": 34,
+            "sev": "info",
+            "rule": "E_USER_ERROR",
+            "msg": "trigger_error(E_USER_ERROR) deprecated in 8.4 -> throw an exception"
+        },
+        {
+            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\global_includes\\hris-oop_copy_05082019.php",
+            "line": 2100,
+            "sev": "info",
+            "rule": "E_USER_ERROR",
+            "msg": "trigger_error(E_USER_ERROR) deprecated in 8.4 -> throw an exception"
+        },
+        {
+            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\global_includes\\hris-oop_copy_05082019.php",
+            "line": 2105,
+            "sev": "info",
+            "rule": "E_USER_ERROR",
+            "msg": "trigger_error(E_USER_ERROR) deprecated in 8.4 -> throw an exception"
+        },
+        {
+            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\global_includes\\jquery-1\\development-bundle\\demos\\autocomplete\\search.php",
+            "line": 591,
+            "sev": "warn",
+            "rule": "addslashes()",
+            "msg": "not a safe SQL escape -> bind parameters with PDO prepared statements"
+        },
+        {
+            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\global_includes\\jquery-1\\development-bundle\\demos\\autocomplete\\search.php",
+            "line": 597,
+            "sev": "warn",
+            "rule": "addslashes()",
+            "msg": "not a safe SQL escape -> bind parameters with PDO prepared statements"
+        },
+        {
+            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\global_includes\\jquery-1\\development-bundle\\demos\\autocomplete\\search.php",
+            "line": 616,
+            "sev": "warn",
+            "rule": "addslashes()",
+            "msg": "not a safe SQL escape -> bind parameters with PDO prepared statements"
+        },
+        {
+            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\global_includes\\patch\\03202017\\NEW\\sys1-oop.php",
+            "line": 35,
+            "sev": "info",
+            "rule": "E_USER_ERROR",
+            "msg": "trigger_error(E_USER_ERROR) deprecated in 8.4 -> throw an exception"
+        },
+        {
+            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\global_includes\\patch\\03202017\\NEW\\sys1-oop.php",
+            "line": 40,
+            "sev": "info",
+            "rule": "E_USER_ERROR",
+            "msg": "trigger_error(E_USER_ERROR) deprecated in 8.4 -> throw an exception"
+        },
+        {
+            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\global_includes\\patch\\03202017\\NEW\\sys1-oop.php",
+            "line": 176,
+            "sev": "info",
+            "rule": "E_USER_ERROR",
+            "msg": "trigger_error(E_USER_ERROR) deprecated in 8.4 -> throw an exception"
+        },
+        {
+            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\global_includes\\patch\\03202017\\NEW\\sys1-oop.php",
+            "line": 181,
+            "sev": "info",
+            "rule": "E_USER_ERROR",
+            "msg": "trigger_error(E_USER_ERROR) deprecated in 8.4 -> throw an exception"
+        },
+        {
+            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\global_includes\\patch\\03202017\\OLD\\sys1-oop.php",
+            "line": 35,
+            "sev": "info",
+            "rule": "E_USER_ERROR",
+            "msg": "trigger_error(E_USER_ERROR) deprecated in 8.4 -> throw an exception"
+        },
+        {
+            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\global_includes\\patch\\03202017\\OLD\\sys1-oop.php",
+            "line": 40,
+            "sev": "info",
+            "rule": "E_USER_ERROR",
+            "msg": "trigger_error(E_USER_ERROR) deprecated in 8.4 -> throw an exception"
+        },
+        {
+            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\global_includes\\patch\\03202017\\OLD\\sys1-oop.php",
+            "line": 176,
+            "sev": "info",
+            "rule": "E_USER_ERROR",
+            "msg": "trigger_error(E_USER_ERROR) deprecated in 8.4 -> throw an exception"
+        },
+        {
+            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\global_includes\\patch\\03202017\\OLD\\sys1-oop.php",
+            "line": 181,
+            "sev": "info",
+            "rule": "E_USER_ERROR",
+            "msg": "trigger_error(E_USER_ERROR) deprecated in 8.4 -> throw an exception"
+        },
+        {
+            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\global_includes\\patch\\2019-02-28\\OLD\\sys1-oop.php",
+            "line": 35,
+            "sev": "info",
+            "rule": "E_USER_ERROR",
+            "msg": "trigger_error(E_USER_ERROR) deprecated in 8.4 -> throw an exception"
+        },
+        {
+            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\global_includes\\patch\\2019-02-28\\OLD\\sys1-oop.php",
+            "line": 40,
+            "sev": "info",
+            "rule": "E_USER_ERROR",
+            "msg": "trigger_error(E_USER_ERROR) deprecated in 8.4 -> throw an exception"
+        },
+        {
+            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\global_includes\\patch\\2019-02-28\\OLD\\sys1-oop.php",
+            "line": 179,
+            "sev": "info",
+            "rule": "E_USER_ERROR",
+            "msg": "trigger_error(E_USER_ERROR) deprecated in 8.4 -> throw an exception"
+        },
+        {
+            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\global_includes\\patch\\2019-02-28\\OLD\\sys1-oop.php",
+            "line": 184,
+            "sev": "info",
+            "rule": "E_USER_ERROR",
+            "msg": "trigger_error(E_USER_ERROR) deprecated in 8.4 -> throw an exception"
+        },
+        {
+            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\global_includes\\patch\\2019-03-10\\NEW\\sys1-oop.php",
+            "line": 35,
+            "sev": "info",
+            "rule": "E_USER_ERROR",
+            "msg": "trigger_error(E_USER_ERROR) deprecated in 8.4 -> throw an exception"
+        },
+        {
+            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\global_includes\\patch\\2019-03-10\\NEW\\sys1-oop.php",
+            "line": 40,
+            "sev": "info",
+            "rule": "E_USER_ERROR",
+            "msg": "trigger_error(E_USER_ERROR) deprecated in 8.4 -> throw an exception"
+        },
+        {
+            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\global_includes\\patch\\2019-03-10\\NEW\\sys1-oop.php",
+            "line": 287,
+            "sev": "info",
+            "rule": "E_USER_ERROR",
+            "msg": "trigger_error(E_USER_ERROR) deprecated in 8.4 -> throw an exception"
+        },
+        {
+            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\global_includes\\patch\\2019-03-10\\NEW\\sys1-oop.php",
+            "line": 292,
+            "sev": "info",
+            "rule": "E_USER_ERROR",
+            "msg": "trigger_error(E_USER_ERROR) deprecated in 8.4 -> throw an exception"
+        },
+        {
+            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\global_includes\\patch\\2019-03-10\\OLD\\sys1-oop.php",
+            "line": 35,
+            "sev": "info",
+            "rule": "E_USER_ERROR",
+            "msg": "trigger_error(E_USER_ERROR) deprecated in 8.4 -> throw an exception"
+        },
+        {
+            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\global_includes\\patch\\2019-03-10\\OLD\\sys1-oop.php",
+            "line": 40,
+            "sev": "info",
+            "rule": "E_USER_ERROR",
+            "msg": "trigger_error(E_USER_ERROR) deprecated in 8.4 -> throw an exception"
+        },
+        {
+            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\global_includes\\patch\\2019-03-10\\OLD\\sys1-oop.php",
+            "line": 223,
+            "sev": "info",
+            "rule": "E_USER_ERROR",
+            "msg": "trigger_error(E_USER_ERROR) deprecated in 8.4 -> throw an exception"
+        },
+        {
+            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\global_includes\\patch\\2019-03-10\\OLD\\sys1-oop.php",
+            "line": 228,
+            "sev": "info",
+            "rule": "E_USER_ERROR",
+            "msg": "trigger_error(E_USER_ERROR) deprecated in 8.4 -> throw an exception"
+        },
+        {
+            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\global_includes\\sys1-oop-original.php",
+            "line": 28,
+            "sev": "info",
+            "rule": "E_USER_ERROR",
+            "msg": "trigger_error(E_USER_ERROR) deprecated in 8.4 -> throw an exception"
+        },
+        {
+            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\global_includes\\sys1-oop-original.php",
+            "line": 33,
+            "sev": "info",
+            "rule": "E_USER_ERROR",
+            "msg": "trigger_error(E_USER_ERROR) deprecated in 8.4 -> throw an exception"
+        },
+        {
+            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\global_includes\\sys1-oop20190313_with_user_lock_and _email.php",
+            "line": 35,
+            "sev": "info",
+            "rule": "E_USER_ERROR",
+            "msg": "trigger_error(E_USER_ERROR) deprecated in 8.4 -> throw an exception"
+        },
+        {
+            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\global_includes\\sys1-oop20190313_with_user_lock_and _email.php",
+            "line": 40,
+            "sev": "info",
+            "rule": "E_USER_ERROR",
+            "msg": "trigger_error(E_USER_ERROR) deprecated in 8.4 -> throw an exception"
+        },
+        {
+            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\global_includes\\sys1-oop20190313_with_user_lock_and _email.php",
+            "line": 287,
+            "sev": "info",
+            "rule": "E_USER_ERROR",
+            "msg": "trigger_error(E_USER_ERROR) deprecated in 8.4 -> throw an exception"
+        },
+        {
+            "file": "\\\\SYSTEMONEV2\\WWW\\hris\\global_includes\\sys1-oop20190313_with_user_lock_and _email.php",
+            "line": 292,
+            "sev": "info",
+            "rule": "E_USER_ERROR",
+            "msg": "trigger_error(E_USER_ERROR) deprecated in 8.4 -> throw an exception"
         },
         {
             "file": "\\\\SYSTEMONEV2\\WWW\\hris\\includes\\mssql_pdo.php",
