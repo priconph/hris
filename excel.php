@@ -1,9 +1,21 @@
 <?php
 
-require_once('/global_includes/hris-oop.php');
+require_once __DIR__ . '/../global_includes/hris-oop.php';
 
-//PhpSpreadsheet (installed with Composer)
-require_once __DIR__ . '/vendor/autoload.php';
+//PhpSpreadsheet (installed with Composer in the shared media folder: www/media/vendor)
+require_once __DIR__ . '/../media/vendor/autoload.php';
+
+// SECURITY: same session check and message as index.php; this page exports employee data
+session_start();
+if(!isset($_SESSION['username'])){
+    http_response_code(403);
+    echo "Please login to systemone!";
+    exit;
+}
+
+// bound-parameter query helpers and the error handler (shared with excel_2.php)
+require_once __DIR__ . '/excel_query_helpers.php';
+
 
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\IOFactory;
@@ -57,8 +69,8 @@ $headerValues = array(
     array('HighestEduc','Educational Attainment',''),
     array('Degree','Degree Obtained',''),
     array('GovtExams','Government Exams',''),
-    array('FatherName',"Father's name"),
-    array('MotherName',"Mother's name"),
+    array('FatherName',"Father's name",''),
+    array('MotherName',"Mother's name",''),
     array('EmpStatus','Employment Status',''),
     array('School','School',''),
     array('DOGraduated','Date of Graduation',''),
@@ -106,6 +118,7 @@ function replaceValue($inputValue,$inputIndex)
 	global $cutoff;
 
     global $headerValues;
+    $h = '';
     for ($i=0; $i < count($headerValues); $i++) {
         //fix comparing 0 values
         if($headerValues[$i][2]==strval($inputIndex))
@@ -118,7 +131,7 @@ function replaceValue($inputValue,$inputIndex)
     if($h == 'EmpNo')
     {
         //if contains letters dont use the text formula
-        if (preg_match('/[A-Za-z]/', $inputValue))
+        if (preg_match('/[A-Za-z]/', (string)$inputValue))
         {
             return $inputValue;
         }
@@ -127,7 +140,7 @@ function replaceValue($inputValue,$inputIndex)
             //get length of the number value
             //=text(text,"00000")
             $zeroMatch = '';
-            for ($i=0; $i < strlen($inputValue); $i++) { 
+            for ($i=0; $i < strlen((string)$inputValue); $i++) { 
                 $zeroMatch .= '0';
             }
             return '=text('.$inputValue.',"'.$zeroMatch.'")';
@@ -143,7 +156,20 @@ function replaceValue($inputValue,$inputIndex)
 	}
     else if($h=='DOBirth')
     {
-        $date = new DateTime($inputValue);
+        // empty, null or 0000-00-00 dates give a blank cell instead of an exception
+        $dobText = trim((string)$inputValue);
+        if ($dobText === '' || strncmp($dobText, '0000-00-00', 10) === 0)
+        {
+            return '';
+        }
+        try
+        {
+            $date = new DateTime($dobText);
+        }
+        catch (Exception $e)
+        {
+            return '';
+        }
         return $date->format('M j, Y');
     }
     else if($h=='pkid')
@@ -158,7 +184,7 @@ function replaceValue($inputValue,$inputIndex)
     }
     else if($h=='Month')
     {
-        $timestamp = mktime(0, 0, 0, $inputValue, 1, 2012);
+        $timestamp = mktime(0, 0, 0, (int)$inputValue, 1, 2012);
     
         return date("M", $timestamp);
     }
@@ -169,8 +195,8 @@ function replaceValue($inputValue,$inputIndex)
     else if($h=='LengthOfService')
     {
 		if (isset($_GET['idx'])) {
-			$co = 2014 - $inputValue;
-			$coyears = substr($cutoff, -10, 4)  - $co;
+			$co = 2014 - (int)$inputValue;
+			$coyears = (int)substr($cutoff, -10, 4)  - $co;
 			
 			if ($coyears < 0) {
 				return '';
@@ -230,15 +256,16 @@ function replaceValue($inputValue,$inputIndex)
         return HRISDB::getInstance()->get_division_name_by_id($inputValue);
     } 
 	else if ($h == 'DateHired') {
-		$holdDH = $inputValue;
+		$holdDH = (string)$inputValue;
 		$months = substr($holdDH, -5, 2);
 		$days = substr($holdDH,-2, 2);
 		
 		return $inputValue;
 	} 
 	else if ($h == 'LOS') {
-		$date1 = new DateTime($holdDH);
-		$date2 = new DateTime($cutoff);
+		// an empty date means now (as before); 0000-00-00 or invalid dates no longer throw, they fall back to now
+		try { $date1 = new DateTime(strncmp($holdDH, '0000-00-00', 10) === 0 ? '' : $holdDH); } catch (Exception $e) { $date1 = new DateTime(); }
+		try { $date2 = new DateTime($cutoff); } catch (Exception $e) { $date2 = new DateTime(); }
 		$interval = $date1->diff($date2);
 		$yearsIdx = $interval->format('%y');
 		$monthsIdx = $interval->format('%m');
@@ -477,7 +504,7 @@ function generateroster($sql, $title, $div)
     $rowNumber++;
 
     //put headers and get index
-    $result = HRISDB::getinstance()->execute_search_query($sql[0][0]);
+    $result = excelHeaderQuery($sql);
 	
 	//show headers
     $finfo = mysqli_fetch_fields($result);
@@ -500,10 +527,10 @@ function generateroster($sql, $title, $div)
 	$rowNumber++;
 
 	//get query of second group with condition of first group
-	$sql2 = $sql[2][0].' where '.$sql[1][1].' = "'.$sql[1][0].'" '.$sql[2][2];
+	$sql2 = array(array($sql[1][1], $sql[1][0]));
 
 	//execute second group
-	$result2 = HRISDB::getinstance()->execute_search_query($sql2);
+	$result2 = excelGroupQuery($sql[2][0], $sql[2][2], $sql2);
 	$subgroupCounter = 0;
 	while($row2 = mysqli_fetch_array($result2))
 	{
@@ -518,10 +545,10 @@ function generateroster($sql, $title, $div)
 		$subCounter = 0;
 
 		//get query of thrid group with condition of first and second group
-		$sql3 = $sql[3][0].' where '.$sql[1][1].' = "'.$sql[1][0].'" and '.$sql[2][1].' = "'.$row2[0].'" '.$sql[3][2];
+		$sql3 = array(array($sql[1][1], $sql[1][0]), array($sql[2][1], $row2[0]));
 
 		//execute third group
-		$result3 = HRISDB::getinstance()->execute_search_query($sql3);
+		$result3 = excelGroupQuery($sql[3][0], $sql[3][2], $sql3);
 
 		while($row3 = mysqli_fetch_array($result3))
 		{
@@ -537,10 +564,10 @@ function generateroster($sql, $title, $div)
 			createLine($rowNumber,incrementLetter($baseletter,$group4space),$lastLetter);
 			$rowNumber++;
 
-			$sql4 = $sql[0][0].' where '.$sql[1][1].' = "'.$sql[1][0].'" and '.$sql[2][1].' = "'.$row2[0].'" and '.$sql[3][1].' = "'.$row3[0].'" '.$sql[0][1];
+			$sql4 = array(array($sql[1][1], $sql[1][0]), array($sql[2][1], $row2[0]), array($sql[3][1], $row3[0]));
 			
 			//get main values
-			$result4 = HRISDB::getinstance()->execute_search_query($sql4);
+			$result4 = excelMainQuery($sql, $sql4);
 			$empCounter = 0;
 			$color = 0;
 			while($row4 = mysqli_fetch_array($result4))
@@ -678,7 +705,7 @@ function generatereport($sql,$title)
     $rowNumber++;
 
     //put headers and get index
-    $result = HRISDB::getinstance()->execute_search_query($sql[0][0]);
+    $result = excelHeaderQuery($sql);
 
     
     //show headers
@@ -696,7 +723,7 @@ function generatereport($sql,$title)
     $rowNumber++;
 
     //execute first group
-    $result = HRISDB::getinstance()->execute_search_query($sql[1][0]);
+    $result = excelQuery($sql[1][0]);
     
     
 
@@ -709,10 +736,10 @@ function generatereport($sql,$title)
         $rowNumber++;
 
         //get query of second group with condition of first group
-        $sql2 = $sql[2][0].' where '.$sql[1][1].' = "'.$row[0].'" '.$sql[2][2];
+        $sql2 = array(array($sql[1][1], $row[0]));
 
         //execute second group
-        $result2 = HRISDB::getinstance()->execute_search_query($sql2);
+        $result2 = excelGroupQuery($sql[2][0], $sql[2][2], $sql2);
         $subgroupCounter = 0;
         while($row2 = mysqli_fetch_array($result2))
         {
@@ -727,10 +754,10 @@ function generatereport($sql,$title)
             $subCounter = 0;
 
             //get query of thrid group with condition of first and second group
-            $sql3 = $sql[3][0].' where '.$sql[1][1].' = "'.$row[0].'" and '.$sql[2][1].' = "'.$row2[0].'" '.$sql[3][2];
+            $sql3 = array(array($sql[1][1], $row[0]), array($sql[2][1], $row2[0]));
 
             //execute third group
-            $result3 = HRISDB::getinstance()->execute_search_query($sql3);
+            $result3 = excelGroupQuery($sql[3][0], $sql[3][2], $sql3);
 
             while($row3 = mysqli_fetch_array($result3))
             {
@@ -746,12 +773,12 @@ function generatereport($sql,$title)
                 createLine($rowNumber,incrementLetter($baseletter,$group4space),$lastLetter);
                 $rowNumber++;
 
-                $sql4 = $sql[0][0].' where '.$sql[1][1].' = "'.$row[0].'" and '.$sql[2][1].' = "'.$row2[0].'" and '.$sql[3][1].' = "'.$row3[0].'" '.$sql[0][1];
+                $sql4 = array(array($sql[1][1], $row[0]), array($sql[2][1], $row2[0]), array($sql[3][1], $row3[0]));
                 
                 //get main values
-                $result4 = HRISDB::getinstance()->execute_search_query($sql4);
+                $result4 = excelMainQuery($sql, $sql4);
                 $empCounter = 0;
-                $color = 0;
+                $color = 0; $counter = 0;
                 while($row4 = mysqli_fetch_array($result4))
                 {
                     $empCounter++;
@@ -895,7 +922,7 @@ function generateloswco($sql, $title) {
     $rowNumber++;
 
     //put headers and get index
-    $result = HRISDB::getinstance()->execute_search_query($sql[0][0]);
+    $result = excelHeaderQuery($sql);
 
     //show headers
     $finfo = mysqli_fetch_fields($result);
@@ -911,7 +938,7 @@ function generateloswco($sql, $title) {
     createLine($rowNumber,incrementLetter($baseletter,$group4space),$lastLetter);
     $rowNumber++;
 	
-	$result = HRISDB::getinstance()->execute_search_query($sql[1][0]);
+	$result = excelQuery($sql[1][0]);
     
     while($row = mysqli_fetch_array($result))
     {
@@ -922,16 +949,16 @@ function generateloswco($sql, $title) {
         $rowNumber++;
 
         //get query of second group with condition of first group
-        $sql2 = $sql[2][0].' where '.$sql[1][1].' = "'.$row[0].'" '.$sql[2][2];
+        $sql2 = array(array($sql[1][1], $row[0]));
 		
 		//execute second group
-        $result2 = HRISDB::getinstance()->execute_search_query($sql2);
+        $result2 = excelGroupQuery($sql[2][0], $sql[2][2], $sql2);
         $subgroupCounter = 0;
         while($row2 = mysqli_fetch_array($result2))
         {
 			if (isset($_GET['idx'])) {
-				$c = 2014 - $row2[0];
-				$cy = substr($cutoff, -10, 4)  - $c;
+				$c = 2014 - (int)$row2[0];
+				$cy = (int)substr($cutoff, -10, 4)  - $c;
 				if ($cy < 0) {
 					break;
 				}
@@ -948,10 +975,10 @@ function generateloswco($sql, $title) {
             $subCounter = 0;
 
             //get query of thrid group with condition of first and second group
-            $sql3 = $sql[3][0].' where '.$sql[1][1].' = "'.$row[0].'" and '.$sql[2][1].' = "'.$row2[0].'" '.$sql[3][2];
+            $sql3 = array(array($sql[1][1], $row[0]), array($sql[2][1], $row2[0]));
 
             //execute third group
-            $result3 = HRISDB::getinstance()->execute_search_query($sql3);
+            $result3 = excelGroupQuery($sql[3][0], $sql[3][2], $sql3);
 			
 			while($row3 = mysqli_fetch_array($result3))
             {
@@ -967,12 +994,12 @@ function generateloswco($sql, $title) {
                 createLine($rowNumber,incrementLetter($baseletter,$group4space),$lastLetter);
                 $rowNumber++;
 
-                $sql4 = $sql[0][0].' where '.$sql[1][1].' = "'.$row[0].'" and '.$sql[2][1].' = "'.$row2[0].'" and '.$sql[3][1].' = "'.$row3[0].'" '.$sql[0][1];
+                $sql4 = array(array($sql[1][1], $row[0]), array($sql[2][1], $row2[0]), array($sql[3][1], $row3[0]));
                 
                 //get main values
-                $result4 = HRISDB::getinstance()->execute_search_query($sql4);
+                $result4 = excelMainQuery($sql, $sql4);
                 $empCounter = 0;
-                $color = 0;
+                $color = 0; $counter = 0;
                 while($row4 = mysqli_fetch_array($result4))
                 {
                     $empCounter++;
@@ -1030,11 +1057,18 @@ if(isset($_GET["Custom"]))
 {
     if ($_GET["Custom"] == "exportResult") {
         //result of main page search
-        session_start();
         //"SELECT EmpNo,LastName,FirstName,MiddleName,Incoming,Outgoing FROM tbl_EmployeeInfo where Incoming='7'";//
-        $exportSQL = $_SESSION['SQL'];
+        if (!isset($_SESSION['SQL_PARAMS']) || !is_array($_SESSION['SQL_PARAMS']))
+        {
+            // no search has been run in this session
+            http_response_code(400);
+            echo 'Nothing to export. Run a search first.';
+            exit;
+        }
+        // rebuilt with bound parameters from the values search.php validated (the old $_SESSION['SQL'] string is no longer executed)
+        list($exportSQL, $exportParams) = excelBuildSearchQuery($_SESSION['SQL_PARAMS']);
         $sql = array(
-                array($exportSQL.'-- -',""),
+                array($exportSQL, "", $exportParams, true),
                 array("SELECT '' FROM tbl_EmployeeInfo limit 1 ", "''"),
                 array("SELECT '' FROM tbl_EmployeeInfo ", "''", " limit 1 "),
                 array("SELECT '' FROM tbl_EmployeeInfo ", "''", " limit 1 ")
@@ -1097,8 +1131,6 @@ if(isset($_GET["Custom"]))
         //view already filtered to active employees
         //Create View LengthOfService AS Select EmpNo, CONCAT(LastName, ', ', FirstName, ' (', MiddleName,')') as FullName , DateHired, EXTRACT(YEAR FROM (FROM_DAYS(DATEDIFF(NOW(),DateHired))))+0 AS LengthOfService FROM tbl_EmployeeInfo WHERE empstatus=1 ORDER BY LengthOfService DESC
         
-        HRISDB::getinstance()->execute_search_query("DROP VIEW IF EXISTS `db_hris`.`LengthOfService`;");
-        HRISDB::getinstance()->execute_search_query("CREATE ALGORITHM=UNDEFINED DEFINER=`builder`@`%` SQL SECURITY DEFINER VIEW  `db_hris`.`LengthOfService` AS select `tbl_EmployeeInfo`.`EmpNo` AS `EmpNo`,concat(`tbl_EmployeeInfo`.`LastName`,', ',`tbl_EmployeeInfo`.`FirstName`,' (',`tbl_EmployeeInfo`.`MiddleName`,')') AS `FullName`,`tbl_EmployeeInfo`.`DateHired` AS `DateHired`,(extract(year from from_days((to_days(now()) - to_days(`tbl_EmployeeInfo`.`DateHired`)))) + 0) AS `LengthOfService` from `tbl_EmployeeInfo` where (`tbl_EmployeeInfo`.`EmpStatus` = 1) order by (extract(year from from_days((to_days(now()) - to_days(`tbl_EmployeeInfo`.`DateHired`)))) + 0) desc;");
 
         $sql = array(
                     //array("SELECT EmpNo, FullName, DateHired, LengthOfService AS LOS FROM LengthOfService "," ORDER BY EmpNo ASC"),
@@ -1121,8 +1153,13 @@ if(isset($_GET["Custom"]))
 	}
 	else if ($_GET["Custom"] == "LengthOfServiceCOCreation") {
 		global $cutoff;
-        HRISDB::getinstance()->execute_search_query("DROP VIEW IF EXISTS `db_hris`.`LengthOfService`;");
-        HRISDB::getinstance()->execute_search_query("CREATE ALGORITHM=UNDEFINED DEFINER=`builder`@`%` SQL SECURITY DEFINER VIEW  `db_hris`.`LengthOfService` AS select `tbl_EmployeeInfo`.`EmpNo` AS `EmpNo`,concat(`tbl_EmployeeInfo`.`LastName`,', ',`tbl_EmployeeInfo`.`FirstName`,' (',`tbl_EmployeeInfo`.`MiddleName`,')') AS `FullName`,`tbl_EmployeeInfo`.`DateHired` AS `DateHired`,(extract(year from from_days((to_days(now()) - to_days(`tbl_EmployeeInfo`.`DateHired`)))) + 0) AS `LengthOfService` from `tbl_EmployeeInfo` where (`tbl_EmployeeInfo`.`EmpStatus` = 1) order by (extract(year from from_days((to_days(now()) - to_days(`tbl_EmployeeInfo`.`DateHired`)))) + 0) desc;");
+		// the cut-off date is used in arithmetic and in the sheet title: must be YYYY-MM-DD (from cutoffChecker.php)
+		if (!isset($_GET['idx']) || !is_string($_GET['idx']) || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $_GET['idx']))
+		{
+			http_response_code(400);
+			echo 'Invalid cut-off date.';
+			exit;
+		}
 		$cutoff = $_GET['idx'];
         $sql = array(
                     array("SELECT EmpNo, FullName, DateHired, LengthOfService AS LOS FROM LengthOfService"," ORDER BY EmpNo ASC"),
@@ -1139,14 +1176,12 @@ if(isset($_GET["Custom"]))
         //view already filtered to active employees
         //CREATE ALGORITHM=UNDEFINED DEFINER=`builder`@`%` SQL SECURITY DEFINER VIEW  `db_hris`.`ages` AS select `tbl_EmployeeInfo`.`EmpNo` AS `EmpNo`,concat(`tbl_EmployeeInfo`.`LastName`,', ',`tbl_EmployeeInfo`.`FirstName`,' (',`tbl_EmployeeInfo`.`MiddleName`,')') AS `FullName`,concat((extract(year from from_days((to_days(now()) - to_days(`tbl_EmployeeInfo`.`DOBirth`)))) + 0)) AS `Age` from `tbl_EmployeeInfo` where (`tbl_EmployeeInfo`.`EmpStatus` = 1) order by concat((extract(year from from_days((to_days(now()) - to_days(`tbl_EmployeeInfo`.`DOBirth`)))) + 0),' years') desc;
         
-        HRISDB::getinstance()->execute_search_query("DROP VIEW IF EXISTS `db_hris`.`ages`");
-        HRISDB::getinstance()->execute_search_query("CREATE VIEW ages AS SELECT *, CONCAT(LastName, ', ', FirstName, ' (', MiddleName,')') as FullName, concat((extract(year from from_days((to_days(now()) - to_days(DOBirth)))) + 0)) AS Age  FROM tbl_EmployeeInfo WHERE EmpStatus='1' ORDER BY Age");
 
         $sql = array(
-                    array("SELECT EmpNo, FullName, CONCAT(Age,' years old') AS Age, DOBirth, Gender, fkPosition, SalaryType FROM ages ",""),
+                    array("SELECT EmpNo, FullName, CONCAT(Age,' years old') AS Age, DOBirth, Gender, fkPosition, SalaryType FROM ages "," AND EmpStatus = 1 "),
                     array("SELECT '' FROM ages limit 1", "''"),
-                    array("SELECT DISTINCT(Age) FROM ages", "Age",""),
-                    array("SELECT '' FROM ages ", "''", " limit 1 ")
+                    array("SELECT DISTINCT(Age) FROM ages", "Age"," AND EmpStatus = 1 ORDER BY Age"),
+                    array("SELECT '' FROM ages ", "''", " AND EmpStatus = 1 limit 1 ")
                     );
         generatereport($sql,"Employee Age Report");
     }
@@ -1189,12 +1224,24 @@ if(isset($_GET["Custom"]))
 
         if (!isset($_GET["Month"]))
         {
-            //if getting all months
-            $_GET["Month"] = '1 or TRUE';
+            //if getting all months (fixed internal value, never from the request)
+            $monthFilter = '1 or TRUE';
+        }
+        else
+        {
+            // the month is placed in the SQL text, so it must be an integer 1-12
+            $monthInput = filter_var($_GET["Month"], FILTER_VALIDATE_INT, array('options' => array('min_range' => 1, 'max_range' => 12)));
+            if ($monthInput === false)
+            {
+                http_response_code(400);
+                echo 'Invalid month.';
+                exit;
+            }
+            $monthFilter = (string)$monthInput;
         }
 
         $sql = array(
-                    array("SELECT EmpNo, CONCAT(LastName, ', ', FirstName, ' (', MiddleName,')') as FullName, month(DOBirth) as Month, DOBirth, concat((extract(year from from_days((to_days(now()) - to_days(DOBirth)))) + 0)) AS Age  from tbl_EmployeeInfo "," AND (month(DOBirth) = ".$_GET["Month"].") AND EmpStatus = 1 ORDER BY month(DOBirth) ASC, Age DESC, day(DOBirth) ASC "),
+                    array("SELECT EmpNo, CONCAT(LastName, ', ', FirstName, ' (', MiddleName,')') as FullName, month(DOBirth) as Month, DOBirth, concat((extract(year from from_days((to_days(now()) - to_days(DOBirth)))) + 0)) AS Age  from tbl_EmployeeInfo "," AND (month(DOBirth) = ".$monthFilter.") AND EmpStatus = 1 ORDER BY month(DOBirth) ASC, Age DESC, day(DOBirth) ASC "),
                     array("SELECT '' FROM tbl_EmployeeInfo limit 1 ", "''"),
                     array("SELECT '' FROM tbl_EmployeeInfo ", "''", " limit 1 "),
                     array("SELECT '' FROM tbl_EmployeeInfo ", "''", " limit 1 ")
@@ -1257,7 +1304,7 @@ if(isset($_GET["Custom"]))
 	
 	else if ($_GET["Custom"] == "ManpowerRoster") {
 		$sqlroster = "SELECT Division FROM tbl_Division";
-		$resultroster = HRISDB::getinstance()->execute_search_query($sqlroster);	
+		$resultroster = excelQuery($sqlroster);	
 		echo "<center>";
 		echo "<h3 style = 'font-family: calibri;'>Division Selection For Report Generation</h3>";
 		echo "<form action = 'divisionChecker.php' method = 'POST'>";
@@ -1268,7 +1315,7 @@ if(isset($_GET["Custom"]))
 			for($i=0; $i<mysqli_num_fields($resultroster );$i++)
 			{
 				echo "<option>";
-				echo $rowroster[$i];
+				echo htmlspecialchars((string)$rowroster[$i], ENT_QUOTES, 'UTF-8');
 				echo "</option>";
 			}
 		}
@@ -1277,13 +1324,16 @@ if(isset($_GET["Custom"]))
 		echo "</form></center>";
 	}
 	else if ($_GET["Custom"] == "ManpowerRosterCreation") {
-		 $sql = array(
+			// the division pkid is placed in SQL text: digits only. divisionChecker.php sends "blank" when not found, which gives an empty report
+			$divisionId = (isset($_GET['id']) && is_string($_GET['id']) && ctype_digit($_GET['id'])) ? $_GET['id'] : '-1';
+			$divisionName = (isset($_GET['divname']) && is_string($_GET['divname'])) ? $_GET['divname'] : '';
+			 $sql = array(
                     array("SELECT EmpNo, CONCAT(LastName, ', ', FirstName, ' (', MiddleName,')') as FullName, HiringStatus, SalaryType, fkPosition as Position, fkPosition as Classification, Gender from tbl_EmployeeInfo "," AND EmpStatus = 1 ORDER BY EmpNo ASC "),
-                    array($_GET['id'], "fkDivision"),
+                    array($divisionId, "fkDivision"),
                     array("SELECT DISTINCT(fkDepartment) FROM tbl_EmployeeInfo ", "fkDepartment"," AND empstatus = 1 "),
                     array("SELECT DISTINCT(fkSection) FROM tbl_EmployeeInfo ", "fkSection"," AND empstatus = 1 ")
                     );
-			generateroster($sql, "MANPOWER ROSTER", $_GET['divname']);
+			generateroster($sql, "MANPOWER ROSTER", $divisionName);
 	}
 }
 else

@@ -4,7 +4,7 @@
 
 	session_start();
 
-	require_once("global_includes/hris-oop.php");
+	require_once __DIR__ . '/../global_includes/hris-oop.php';
 
 //  echo  $_SESSION['username'];
 //   exit;
@@ -14,12 +14,12 @@
 	}
 	
 	//1112024 by Nessa
-	$username = $_SESSION['username'];
+	$username = (string)$_SESSION['username'];
 	// echo $username;
 	$valid_username = HRISDB::getInstance()->get_valid_ip($username);
 		
 	if(!$valid_username){
-        echo '<span style="color:red;"><br><br><br><br><br><br><br><br><br><br><br><br><center><h1>WARNING!<br> YOU ARE NOT ALLOWED TO VIEW THIS PAGE!</h1></center></span';
+        echo '<span style="color:red;"><br><br><br><br><br><br><br><br><br><br><br><br><center><h1>WARNING!<br> YOU ARE NOT ALLOWED TO VIEW THIS PAGE!</h1></center></span>';
         exit;
     }
 
@@ -84,8 +84,8 @@
 	    }
 
       //get field and status through php
-      var field = '<?php echo $_SESSION['field'] ?>';
-      var status = '<?php echo $_SESSION['status'] ?>';
+      var field = <?php echo json_encode(isset($_SESSION['field']) ? (string)$_SESSION['field'] : '', JSON_HEX_TAG|JSON_HEX_AMP|JSON_HEX_APOS|JSON_HEX_QUOT); ?>;
+      var status = <?php echo json_encode(isset($_SESSION['status']) ? (string)$_SESSION['status'] : '', JSON_HEX_TAG|JSON_HEX_AMP|JSON_HEX_APOS|JSON_HEX_QUOT); ?>;
 
       function exportResult()
       {
@@ -194,7 +194,7 @@
 
     <form name="search" method="post" action="">
     	<br>&nbsp;
-      Search for: <input type="text" class="search" name="find" id="find" onkeyup="returnResult();" value="<?php echo $_SESSION['search']; ?>"> by
+      Search for: <input type="text" class="search" name="find" id="find" onkeyup="returnResult();" value="<?php echo htmlspecialchars(isset($_SESSION['search']) ? (string)$_SESSION['search'] : '', ENT_QUOTES, 'UTF-8'); ?>"> by
         
         <select name="field" class="comboBox" id="field" onchange="returnResult();">
           <option value="EmpNo">Employee No</option>

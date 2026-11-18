@@ -3,7 +3,7 @@
 //for layout testing
 $border = 0;
 
-require_once("global_includes/hris-oop.php");
+require_once __DIR__ . '/../global_includes/hris-oop.php';
 
 include_once 'db_hris.php';
 

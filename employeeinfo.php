@@ -1,19 +1,56 @@
 <?php
 
+// session first, before any include or output
+session_start();
+
 //for layout testing
 $border = 0;
 
-require_once __DIR__ . '/global_includes/hris-oop.php';
+require_once __DIR__ . '/../global_includes/hris-oop.php';
 include_once 'db_hris.php';
 
 ob_start(); 
-session_start();
+
+// same guard and message as index.php
+if(!isset($_SESSION['username'])){
+    echo "Please login to systemone!";
+    exit;
+}
 $username = $_SESSION['username'];
-$checkSection = HRISDB::getInstance()->getSectionID($username);
+
+// escape a value for HTML text and attributes (null-safe)
+function e($v)
+{
+    return htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8');
+}
+
+// format a date for display; '' for empty, null, 0000-00-00 or invalid values
+function formatDateForView($value, $fmt = 'm/d/Y')
+{
+    $value = trim((string)$value);
+    if ($value === '' || strncmp($value, '0000-00-00', 10) === 0)
+    {
+        return '';
+    }
+    try
+    {
+        $date = new DateTime($value);
+    }
+    catch (Exception $e)
+    {
+        return '';
+    }
+    return $date->format($fmt);
+}
 
 //validations done in javascript
 function GetAge($bday)
 {
+    $bday = formatDateForView($bday, 'Y-m-d');
+    if ($bday === '')
+    {
+        return '';
+    }
     $date = new DateTime($bday);
     $diff = $date->diff(new DateTime());
 
@@ -26,362 +63,363 @@ function GetAge($bday)
 
 function convertDateFromat($date)
 {
-    try
-    {
-        //change format of date
-        $date = new DateTime($date);
-        $returnDate = $date->format('Y-m-d');
-    }
-    catch (Exception $e)
-    {
-        $returnDate = '';
-    }
-    return $returnDate;
+    //change format of date
+    return formatDateForView($date, 'Y-m-d');
+}
+
+// date for the database: null (not '') when empty or invalid
+function dateOrNull($date)
+{
+    $converted = convertDateFromat($date);
+    return ($converted === '') ? null : $converted;
 }
 
 function convertDateFromatViewing($date)
 {
-    try
-    {
-        //change format of date
-        $date = new DateTime($date);
-        $returnDate = $date->format('m/d/Y');
-    }
-    catch (Exception $e)
-    {
-        $returnDate = '';
-    }
-    return $returnDate;
+    return formatDateForView($date, 'm/d/Y');
 }
+
+// every key the template reads from $EmpInfo, '' by default (new or missing employee)
+function employeeDefaults()
+{
+    $keys = array('pkid', 'Age', 'EmpNo', 'LastName', 'FirstName', 'MiddleName', 'NickName', 'Picturepath',
+        'Gender', 'DOBirth', 'CivilStatus', 'Spouse', 'ExemptBaseCode',
+        'CityAddress1', 'CityAddress2', 'CityAddress3', 'ProvAddress1', 'ProvAddress2', 'ProvAddress3',
+        'TelephoneNo', 'Incoming', 'Outgoing', 'Remarks', 'FatherName', 'MotherName', 'Emergency',
+        'HighestEduc', 'School', 'DOGraduated', 'Degree', 'Honors', 'GovtExams',
+        'HiringStatus', 'EmpStatus', 'fkDivision', 'fkDepartment', 'fkSection', 'fkPosition', 'SalaryType',
+        'SSN', 'TIN', 'PagIbig', 'PhilHealth', 'BloodType', 'DateHired', 'Effectivity', 'Reason');
+    return array_fill_keys($keys, '');
+}
+
+// load the employee row by pkid over the defaults; defaults only when pkid is empty or not found
+function loadEmployeeDetails($pkid)
+{
+    $info = employeeDefaults();
+    $pkid = (int)$pkid;
+    if ($pkid > 0)
+    {
+        $result = HRISDB::getInstance()->get_employee_info_by_id($pkid);
+        $row = $result ? mysqli_fetch_assoc($result) : null;
+        if (is_array($row))
+        {
+            foreach ($row as $key => $value)
+            {
+                $info[$key] = ($value === null) ? '' : $value;
+            }
+        }
+    }
+    $info['Age'] = GetAge($info['DOBirth']);
+    return $info;
+}
+
 
 //initialize empkid
 $pkid = "";
 $message = '';
 $empNotUnique = false;
 
-    //get gor testing
-    if ($_SERVER["REQUEST_METHOD"] == "POST")// || $_SERVER["REQUEST_METHOD"] == "GET")
+    // posted form fields with '' as default; never written back into $_POST
+    $post = array_merge(array_fill_keys(array('pkid', 'formtype', 'DateOfBirth', 'DateGraduated', 'DateHired', 'DepDateOfBirth',
+        'EffectivityDate', 'NotificationDate', 'EmployeeNo', 'TaxDependent',
+        'LastName', 'FirstName', 'MiddleName', 'NickName', 'Gender', 'CivilStatus', 'Spouse', 'TaxExemptionBase',
+        'CityAddStreet', 'CityAddBarangay', 'CityAdd', 'ProvAddressBarangay', 'ProvAddressMunicipality',
+        'ProvAddress', 'Telephone', 'IncomingShuttle', 'OutgoingShuttle', 'Remarks',
+        'HighestEducationalAttainment', 'SchoolAddress', 'DegreeObtained', 'HonorsAwards', 'GovernmentExams',
+        'Division', 'Department', 'Section', 'Position', 'EmploymentStatus', 'Status', 'SalaryType',
+        'SSS', 'TIN', 'PagIbig', 'PhilHealth', 'BloodType', 'ResEffectDate', 'ResReason',
+        'FatherName', 'MotherName', 'PersonToBeNotified',
+        'DepLastName', 'DepFirstName', 'DepMiddleName', 'Relationship', 'deppkid',
+        'Action', 'NatureOfOffense', 'DefinitionOfOffense', 'FrequencyOfOffense', 'Offensepkid',
+        'historyDivision', 'historyDepartment', 'historySection', 'historyPosition',
+        'historyFrom', 'historyTo', 'historypkid', 'tabIndex', 'Present'), ''), $_POST);
+   
+    // only these form types are handled
+    $formtype = in_array($post['formtype'], array('SaveBasicInfo', 'Dependentok', 'Dependentdelete', 'Dependentadd',
+        'Offensesave', 'Offensedelete', 'Offenseadd', 'addHistory', 'editHistory', 'deleteHistory'), true) ? $post['formtype'] : '';
+
+    // pkid is resolved once here: POST (employees form in search.php), GET as fallback
+    $pkidInput = ($post['pkid'] !== '') ? $post['pkid'] : (isset($_GET['pkid']) ? $_GET['pkid'] : '');
+    $pkid = (is_scalar($pkidInput) && (int)$pkidInput > 0) ? (int)$pkidInput : "";
+
+    $EmpInfo = employeeDefaults();
+    try
     {
-        ////////for development
-
-        //default missing form fields to '' (PHP 8 raises "Undefined array key"; PHP 5.3 treated them as empty)
-        foreach (array('pkid', 'formtype', 'DateOfBirth', 'DateGraduated', 'DateHired', 'DepDateOfBirth',
-            'EffectivityDate', 'NotificationDate', 'EmployeeNo', 'TaxDependent',
-            'LastName', 'FirstName', 'MiddleName', 'NickName', 'Gender', 'CivilStatus', 'Spouse', 'TaxExemptionBase',
-            'CityAddStreet', 'CityAddBarangay', 'CityAdd', 'ProvAddressBarangay', 'ProvAddressMunicipality',
-            'ProvAddress', 'Telephone', 'IncomingShuttle', 'OutgoingShuttle', 'Remarks',
-            'HighestEducationalAttainment', 'SchoolAddress', 'DegreeObtained', 'HonorsAwards', 'GovernmentExams',
-            'Division', 'Department', 'Section', 'Position', 'EmploymentStatus', 'Status', 'SalaryType',
-            'SSS', 'TIN', 'PagIbig', 'PhilHealth', 'BloodType', 'ResEffectDate', 'ResReason',
-            'FatherName', 'MotherName', 'PersonToBeNotified',
-            'DepLastName', 'DepFirstName', 'DepMiddleName', 'Relationship', 'deppkid',
-            'Action', 'NatureOfOffense', 'DefinitionOfOffense', 'FrequencyOfOffense', 'Offensepkid',
-            'historyDivision', 'historyDepartment', 'historySection', 'historyPosition',
-            'historyFrom', 'historyTo', 'historypkid', 'tabIndex') as $postKey)
+        //get gor testing
+        if ($_SERVER["REQUEST_METHOD"] == "POST")// || $_SERVER["REQUEST_METHOD"] == "GET")
         {
-            if (!isset($_POST[$postKey])) $_POST[$postKey] = '';
-        }
+            //validate date fields (null when empty, so the database gets NULL)
+            $DOB = dateOrNull($post["DateOfBirth"]);
+            $DOGrad = dateOrNull($post["DateGraduated"]);
+            $DOHired = dateOrNull($post["DateHired"]);
+            $DepDOB = dateOrNull($post["DepDateOfBirth"]);
+            $EffectivityDate = dateOrNull($post["EffectivityDate"]);
+            $NotificationDate = dateOrNull($post["NotificationDate"]);
 
-        //validate date fields
-        if($_POST["DateOfBirth"]!='')
-        {
-            $DOB = convertDateFromat($_POST["DateOfBirth"]);
-        }
-        else $DOB = '';
-
-        if($_POST["DateGraduated"]!='')
-        {
-            $DOGrad = convertDateFromat($_POST["DateGraduated"]);
-        }
-        else $DOGrad = '';
-
-        if($_POST["DateHired"]!='')
-        {
-            $DOHired = convertDateFromat($_POST["DateHired"]);
-        }
-        else $DOHired = '';
-
-        if($_POST["DepDateOfBirth"]!='')
-        {
-            $_POST["DepDateOfBirth"] = convertDateFromat($_POST["DepDateOfBirth"]);
-        }
-
-        if($_POST["EffectivityDate"]!='')
-        {
-            $_POST["EffectivityDate"] = convertDateFromat($_POST["EffectivityDate"]);
-        }
-
-        if($_POST["NotificationDate"]!='')
-        {
-            $_POST["NotificationDate"] = convertDateFromat($_POST["NotificationDate"]);
-        }
-
-        //put leading zeros in employee number
-        if(($_POST["EmployeeNo"] != "") && (strlen($_POST["EmployeeNo"]) < 4))
-        {
-            for ($i=4-strlen($_POST["EmployeeNo"]); $i > 0; $i--) { 
-                $_POST["EmployeeNo"] = '0'.$_POST["EmployeeNo"];
-            }
-        }
-
-        //for dependents form
-        //get value of tax dependent
-        if($_POST["TaxDependent"]=='yes') $taxdep = 1; else $taxdep = 0;
-            $pkid = $_POST["EmployeeNo"];
-
-        if($_POST["pkid"]!="")
-        {
-            //get pkid
-            $pkid = $_POST["pkid"];
-            // echo $pkid;
-
-            if($_POST["EmployeeNo"]!="")
+            //put leading zeros in employee number
+            $EmployeeNo = (string)$post["EmployeeNo"];
+            if(($EmployeeNo != "") && (strlen($EmployeeNo) < 4))
             {
-                //check if the employee number is already existing
-                $empNotUnique = HRISDB::getInstance()->verify_employee_number($_POST["EmployeeNo"],$pkid);
-                if($empNotUnique)
+                $EmployeeNo = str_pad($EmployeeNo, 4, '0', STR_PAD_LEFT);
+            }
+
+            //for dependents form
+            //get value of tax dependent
+            if($post["TaxDependent"]=='yes') $taxdep = 1; else $taxdep = 0;
+
+            if($pkid!="")
+            {
+                if($EmployeeNo!="")
                 {
-                    $message = 'unable to save, employee number '.$_POST["EmployeeNo"].' is already existing';
+                    //check if the employee number is already existing
+                    $empNotUnique = HRISDB::getInstance()->verify_employee_number($EmployeeNo,$pkid);
+                    if($empNotUnique)
+                    {
+                        $message = 'unable to save, employee number '.$EmployeeNo.' is already existing';
+                    }
                 }
-            }
-            else
-                $empNotUnique = false;
+                else
+                    $empNotUnique = false;
 
-            //update employee
-            if ($_POST["formtype"]=="SaveBasicInfo" && !$empNotUnique)
-            {
-                //update basic info
-                HRISDB::getInstance()->update_employee($pkid,
-                    $_POST["LastName"],
-                    $_POST["FirstName"],
-                    $_POST["MiddleName"],
-                    $_POST["NickName"],
-                    $DOB,
-                    $_POST["Gender"],
-                    $_POST["CivilStatus"],
-                    $_POST["Spouse"],
-                    $_POST['TaxExemptionBase'],
-                    $_POST["CityAddStreet"],
-                    $_POST["CityAddBarangay"],
-                    $_POST["CityAdd"],
-                    $_POST["ProvAddressBarangay"],
-                    $_POST["ProvAddressMunicipality"],
-                    $_POST["ProvAddress"],
-                    $_POST["Telephone"],
-                    $_POST["IncomingShuttle"],
-                    $_POST["OutgoingShuttle"],
-                    $_POST["Remarks"]);
-
-                //update educational background
-                HRISDB::getInstance()->update_employee_educ($pkid,
-                    $_POST["HighestEducationalAttainment"],
-                    $_POST["SchoolAddress"],
-                    $DOGrad,
-                    $_POST["DegreeObtained"],
-                    $_POST["HonorsAwards"],
-                    $_POST["GovernmentExams"]);
-
-                //check for employment history changes
-                if(HRISDB::getInstance()->change_employement_history($pkid,
-                    $_POST["Division"],
-                    $_POST["Department"],
-                    $_POST["Section"],
-                    $_POST["Position"]
-                    ))
+                //update employee
+                if ($formtype=="SaveBasicInfo" && !$empNotUnique)
                 {
-                //insert into employment history table if there is change detected
-                HRISDB::getInstance()->add_employee_history($pkid,$_POST["Division"],$_POST["Department"],$_POST["Section"],$_POST["Position"],date("Y-m-d"),'Present');
+                    //update basic info
+                    HRISDB::getInstance()->update_employee($pkid,
+                        $post["LastName"],
+                        $post["FirstName"],
+                        $post["MiddleName"],
+                        $post["NickName"],
+                        $DOB,
+                        $post["Gender"],
+                        $post["CivilStatus"],
+                        $post["Spouse"],
+                        $post['TaxExemptionBase'],
+                        $post["CityAddStreet"],
+                        $post["CityAddBarangay"],
+                        $post["CityAdd"],
+                        $post["ProvAddressBarangay"],
+                        $post["ProvAddressMunicipality"],
+                        $post["ProvAddress"],
+                        $post["Telephone"],
+                        $post["IncomingShuttle"],
+                        $post["OutgoingShuttle"],
+                        $post["Remarks"]);
+
+                    //update educational background
+                    HRISDB::getInstance()->update_employee_educ($pkid,
+                        $post["HighestEducationalAttainment"],
+                        $post["SchoolAddress"],
+                        $DOGrad,
+                        $post["DegreeObtained"],
+                        $post["HonorsAwards"],
+                        $post["GovernmentExams"]);
+
+                    //check for employment history changes
+                    if(HRISDB::getInstance()->change_employement_history($pkid,
+                        $post["Division"],
+                        $post["Department"],
+                        $post["Section"],
+                        $post["Position"]
+                        ))
+                    {
+                    //insert into employment history table if there is change detected
+                    HRISDB::getInstance()->add_employee_history($pkid,$post["Division"],$post["Department"],$post["Section"],$post["Position"],date("Y-m-d"),'Present');
+                    }
+
+                    //update employee employment status
+                    HRISDB::getInstance()->update_employee_employment_info($pkid,
+                        $EmployeeNo,
+                        $post["EmploymentStatus"], //employment category
+                        $post["Division"],
+                        $post["Status"],  //active resigned
+                        $post["Department"],
+                        $post["SalaryType"],
+                        $post["Section"],
+                        $post["SSS"],
+                        $post["Position"],
+                        $post["TIN"],
+                        $post["PagIbig"],
+                        $DOHired,
+                        $post["PhilHealth"],
+                        $post["BloodType"],
+                        $post["ResEffectDate"],
+                        $post["ResReason"]);
+
+                    //update family info
+                    HRISDB::getInstance()->update_employee_family($pkid,$post["FatherName"],
+                        $post["MotherName"],
+                        $post["PersonToBeNotified"]);
+
+                    $message = 'Employee Information Saved';
                 }
 
-                //update employee employment status
-                HRISDB::getInstance()->update_employee_employment_info($pkid,
-                    $_POST["EmployeeNo"],
-                    $_POST["EmploymentStatus"], //employment category
-                    $_POST["Division"],
-                    $_POST["Status"],  //active resigned
-                    $_POST["Department"],
-                    $_POST["SalaryType"],
-                    $_POST["Section"],
-                    $_POST["SSS"],
-                    $_POST["Position"],
-                    $_POST["TIN"],
-                    $_POST["PagIbig"],
-                    $DOHired,
-                   	$_POST["PhilHealth"],
-					$_POST["BloodType"],
-					$_POST["ResEffectDate"],
-					$_POST["ResReason"]);
-
-                //update family info
-                HRISDB::getInstance()->update_employee_family($pkid,$_POST["FatherName"],
-                    $_POST["MotherName"],
-                    $_POST["PersonToBeNotified"]);
-
-                $message = 'Employee Information Saved';
-            }
-
-            //dependent update
-            if ($_POST["formtype"]=="Dependentok")
-            {
-                HRISDB::getInstance()->update_dependent($_POST["DepLastName"],
-                    $_POST["DepFirstName"],
-                    $_POST["DepMiddleName"],
-                    $_POST["DepDateOfBirth"],
-                    $_POST["Relationship"],
-                    $taxdep,
-                    $_POST["deppkid"]);
-
-                //update family info
-                HRISDB::getInstance()->update_employee_family($pkid,$_POST["FatherName"],
-                    $_POST["MotherName"],
-                    $_POST["PersonToBeNotified"]);
-
-                $message = 'Dependent information updated';
-            }
-
-            //dependent delete
-            else if ($_POST["formtype"]=="Dependentdelete")
-            {
-                HRISDB::getInstance()->delete_dependent($_POST["deppkid"]);
-
-                $message = 'Dependent deleted';
-            }
-
-            //create new dependent
-            else if ($_POST["formtype"]=="Dependentadd")
-            {                             
-                HRISDB::getInstance()->create_dependent($_POST["DepLastName"],
-                    $_POST["DepFirstName"],
-                    $_POST["DepMiddleName"],
-                    $pkid,
-                    $_POST["DepDateOfBirth"],
-                    $_POST["Relationship"],
-                    '0',
-                    $taxdep);
-
-                //update family info
-                HRISDB::getInstance()->update_employee_family($pkid,$_POST["FatherName"],
-                    $_POST["MotherName"],
-                    $_POST["PersonToBeNotified"]);
-
-                $message = 'New dependent added';
-            }
-
-            //update disciplinary info
-            if ($_POST["formtype"]=="Offensesave")
-            {
-                HRISDB::getInstance()->update_disciplinary($_POST["Action"],
-                    $_POST["NatureOfOffense"],
-                    $_POST["DefinitionOfOffense"],
-                    $_POST["FrequencyOfOffense"],
-                    $_POST["NotificationDate"],
-                    $_POST["EffectivityDate"],
-                    $_POST["Offensepkid"]);
-
-                $message = 'Offense saved';
-            }
-
-            //delete disciplinary
-            else if ($_POST["formtype"]=="Offensedelete")
-            {
-                HRISDB::getInstance()->delete_disciplinary($_POST["Offensepkid"]);
-
-                $message = 'Offense deleted';
-            }
-
-            //create disciplinary info
-            else if ($_POST["formtype"]=="Offenseadd")
-            {
-                HRISDB::getInstance()->create_disciplinary($_POST["Action"],
-                    $_POST["NatureOfOffense"],
-                    $_POST["DefinitionOfOffense"],                    
-                    $_POST["FrequencyOfOffense"],
-                    $_POST["NotificationDate"],
-                    $_POST["EffectivityDate"],
-                    $pkid);
-
-                $message = 'Offense added';
-            }
-			
-	
-            //create employment history info
-            else if ($_POST["formtype"]=="addHistory")
-            {
-                if(isset($_POST['Present']) && $_POST['Present'] == 'Yes')
+                //dependent update
+                if ($formtype=="Dependentok")
                 {
-                    $_POST["historyTo"] = 'Present';
+                    HRISDB::getInstance()->update_dependent($post["DepLastName"],
+                        $post["DepFirstName"],
+                        $post["DepMiddleName"],
+                        $DepDOB,
+                        $post["Relationship"],
+                        $taxdep,
+                        $post["deppkid"]);
+
+                    //update family info
+                    HRISDB::getInstance()->update_employee_family($pkid,$post["FatherName"],
+                        $post["MotherName"],
+                        $post["PersonToBeNotified"]);
+
+                    $message = 'Dependent information updated';
                 }
 
-                HRISDB::getInstance()->add_employee_history($pkid,$_POST["historyDivision"],$_POST["historyDepartment"],$_POST["historySection"],$_POST["historyPosition"],$_POST["historyFrom"],$_POST["historyTo"]);
-                $message = 'Employment History Added';
-            }
-
-            //create employment history info
-            else if ($_POST["formtype"]=="editHistory")
-            {
-                if(isset($_POST['Present']) && $_POST['Present'] == 'Yes')
+                //dependent delete
+                else if ($formtype=="Dependentdelete")
                 {
-                    $_POST["historyTo"] = 'Present';
+                    HRISDB::getInstance()->delete_dependent($post["deppkid"]);
+
+                    $message = 'Dependent deleted';
                 }
-                HRISDB::getInstance()->update_employee_history($_POST["historypkid"],$_POST["historyDivision"],$_POST["historyDepartment"],$_POST["historySection"],$_POST["historyPosition"],$_POST["historyFrom"],$_POST["historyTo"]);
-                $message = 'Employment History edited';
-            }
 
-            //create employment history info
-            else if ($_POST["formtype"]=="deleteHistory")
-            {
-                HRISDB::getInstance()->delete_employee_history($_POST["historypkid"]);
-                $message = 'Deleted Employment History';
-            }
-        }
-        else //else if no pkid is found create the new employee
-        {
-            if ($_POST["formtype"]=="SaveBasicInfo")
-            {
-                //create new employee
-                HRISDB::getInstance()->create_employee(
-                    $_POST["LastName"],
-                    $_POST["FirstName"],
-                    $_POST["MiddleName"],
-                    $_POST["NickName"],
-                    $DOB,
-                    $_POST["Gender"],
-                    $_POST["CivilStatus"],
-                    $_POST["Spouse"],
-                    $_POST['TaxExemptionBase'],
-                    $_POST["CityAddStreet"],
-                    $_POST["CityAddBarangay"],
-                    $_POST["CityAdd"],
-                    $_POST["ProvAddressBarangay"],
-                    $_POST["ProvAddressMunicipality"],
-                    $_POST["ProvAddress"],
-                    $_POST["Telephone"],
-                    $_POST["IncomingShuttle"],
-                    $_POST["OutgoingShuttle"],
-                    $_POST["Remarks"]);
+                //create new dependent
+                else if ($formtype=="Dependentadd")
+                {                             
+                    HRISDB::getInstance()->create_dependent($post["DepLastName"],
+                        $post["DepFirstName"],
+                        $post["DepMiddleName"],
+                        $pkid,
+                        $DepDOB,
+                        $post["Relationship"],
+                        '0',
+                        $taxdep);
 
-                //get pkid of the newly inserted account
-                $pkid = HRISDB::getInstance()->get_last_inserted_employee_id();
+                    //update family info
+                    HRISDB::getInstance()->update_employee_family($pkid,$post["FatherName"],
+                        $post["MotherName"],
+                        $post["PersonToBeNotified"]);
 
-                $message = 'Basic employee information saved';
-            }
-        }
+                    $message = 'New dependent added';
+                }
+
+                //update disciplinary info
+                if ($formtype=="Offensesave")
+                {
+                    HRISDB::getInstance()->update_disciplinary($post["Action"],
+                        $post["NatureOfOffense"],
+                        $post["DefinitionOfOffense"],
+                        $post["FrequencyOfOffense"],
+                        $NotificationDate,
+                        $EffectivityDate,
+                        $post["Offensepkid"]);
+
+                    $message = 'Offense saved';
+                }
+
+                //delete disciplinary
+                else if ($formtype=="Offensedelete")
+                {
+                    HRISDB::getInstance()->delete_disciplinary($post["Offensepkid"]);
+
+                    $message = 'Offense deleted';
+                }
+
+                //create disciplinary info
+                else if ($formtype=="Offenseadd")
+                {
+                    HRISDB::getInstance()->create_disciplinary($post["Action"],
+                        $post["NatureOfOffense"],
+                        $post["DefinitionOfOffense"],                    
+                        $post["FrequencyOfOffense"],
+                        $NotificationDate,
+                        $EffectivityDate,
+                        $pkid);
+
+                    $message = 'Offense added';
+                }
+                
         
+                //create employment history info
+                else if ($formtype=="addHistory")
+                {
+                    $historyTo = ($post['Present'] == 'Yes') ? 'Present' : $post["historyTo"];
+
+                    HRISDB::getInstance()->add_employee_history($pkid,$post["historyDivision"],$post["historyDepartment"],$post["historySection"],$post["historyPosition"],$post["historyFrom"],$historyTo);
+                    $message = 'Employment History Added';
+                }
+
+                //create employment history info
+                else if ($formtype=="editHistory")
+                {
+                    $historyTo = ($post['Present'] == 'Yes') ? 'Present' : $post["historyTo"];
+                    HRISDB::getInstance()->update_employee_history($post["historypkid"],$post["historyDivision"],$post["historyDepartment"],$post["historySection"],$post["historyPosition"],$post["historyFrom"],$historyTo);
+                    $message = 'Employment History edited';
+                }
+
+                //create employment history info
+                else if ($formtype=="deleteHistory")
+                {
+                    HRISDB::getInstance()->delete_employee_history($post["historypkid"]);
+                    $message = 'Deleted Employment History';
+                }
+            }
+            else //else if no pkid is found create the new employee
+            {
+                if ($formtype=="SaveBasicInfo")
+                {
+                    //create new employee
+                    HRISDB::getInstance()->create_employee(
+                        $post["LastName"],
+                        $post["FirstName"],
+                        $post["MiddleName"],
+                        $post["NickName"],
+                        $DOB,
+                        $post["Gender"],
+                        $post["CivilStatus"],
+                        $post["Spouse"],
+                        $post['TaxExemptionBase'],
+                        $post["CityAddStreet"],
+                        $post["CityAddBarangay"],
+                        $post["CityAdd"],
+                        $post["ProvAddressBarangay"],
+                        $post["ProvAddressMunicipality"],
+                        $post["ProvAddress"],
+                        $post["Telephone"],
+                        $post["IncomingShuttle"],
+                        $post["OutgoingShuttle"],
+                        $post["Remarks"]);
+
+                    //get pkid of the newly inserted account
+                    $pkid = HRISDB::getInstance()->get_last_inserted_employee_id();
+
+                    $message = 'Basic employee information saved';
+                }
+            }
+        }
+        else if ($pkid == "") //do nothing and leave all fields blank for creation of new employee
+        {
+            $message = 'Create new employee';
+        }
+
+        //load the employee by pkid after any write, so the form shows fresh data
         if($pkid != "")
         {
-            //if an account pkid is found, load data
-
-            //get all account data
-            $result = HRISDB::getInstance()->get_employee_info_by_id($pkid);
-            $EmpInfo = mysqli_fetch_array($result);
-            
-            //get age using php
-            $EmpInfo['Age'] = GetAge($EmpInfo['DOBirth']);
+            $EmpInfo = loadEmployeeDetails($pkid);
         }
     }
-    else //do nothing and leave all fields blank for creation of new employee
+    catch (Throwable $ex)
     {
-        $message = 'Create new employee';
+        //never show SQL or exception text in the browser
+        error_log('employeeinfo.php: ' . get_class($ex) . ': ' . $ex->getMessage() . ' in ' . basename($ex->getFile()) . ':' . $ex->getLine());
+        $message = 'A database error occurred. Please try again or contact your administrator.';
+        echo $message;
+        echo $ex->getMessage();
+        exit;
+        // local debugging only: set APP_ENV=dev in the environment to see the real error on screen (off by default)
+        if (getenv('APP_ENV') === 'dev')
+        {
+            $message .= ' [' . get_class($ex) . ': ' . $ex->getMessage() . ' in ' . basename($ex->getFile()) . ':' . $ex->getLine() . ']';
+        }
+        $EmpInfo = employeeDefaults();
     }
 	 
 ?>
@@ -395,9 +433,9 @@ $empNotUnique = false;
     <link href="src/hris.css" type="text/css" rel="stylesheet" media="all" />
     
     <!-- JQUERY -->
-    <link rel="stylesheet" type="text/css" href="global_includes/jquery-1/css/custom-theme/jquery-ui-1.8.19.custom.css" />  
-    <script type="text/javascript" src="global_includes/jquery-1/js/jquery-1.7.2.min.js"></script>
-    <script type="text/javascript" src="global_includes/jquery-1/js/jquery-ui-1.8.19.custom.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="../global_includes/jquery-1/css/custom-theme/jquery-ui-1.8.19.custom.css" />  
+    <script type="text/javascript" src="../global_includes/jquery-1/js/jquery-1.7.2.min.js"></script>
+    <script type="text/javascript" src="../global_includes/jquery-1/js/jquery-ui-1.8.19.custom.min.js"></script>
 	<script type="text/javascript" charset="utf8" src="http://ajax.aspnetcdn.com/ajax/jquery.dataTables/1.9.4/jquery.dataTables.min.js"></script>
 
     <!-- table sorter -->
@@ -408,7 +446,7 @@ $empNotUnique = false;
     <script language="javascript" type="text/javascript">
 
     //set page title
-    document.title = document.title<?php echo '+": ['.$EmpInfo['EmpNo'].'] '.$EmpInfo['LastName'].', '.$EmpInfo['FirstName'].'"'; ?>;
+    document.title = document.title<?php echo '+' . json_encode(': ['.$EmpInfo['EmpNo'].'] '.$EmpInfo['LastName'].', '.$EmpInfo['FirstName'], JSON_HEX_TAG|JSON_HEX_AMP|JSON_HEX_APOS|JSON_HEX_QUOT); ?>;
 
     //variable for validating fields
     var error = false;
@@ -613,8 +651,8 @@ $empNotUnique = false;
 
         //get the selected tab
         var selectedTab = <?php 
-        if (isset($_POST["tabIndex"]) && $_POST["tabIndex"]!="") 
-            echo (int)$_POST["tabIndex"];
+        if ($post["tabIndex"]!="") 
+            echo (int)$post["tabIndex"];
         else
             echo "0";
         ?>;
@@ -714,13 +752,13 @@ $empNotUnique = false;
         var adegreeObtainedTags = [
             <?php
                 //tags for the degree field autocomplete
-                $result = HRISDB::getInstance()->execute_search_query("SELECT Distinct(Degree) FROM tbl_EmployeeInfo WHERE Degree!=''");
-                $list = '';
+                $result = HRISDB::getInstance()->get_distinct_degrees();
+                $list = array();
                 while($row = mysqli_fetch_array($result))
                 {
-                    $list .= '"'.$row['Degree'].'",';
+                    $list[] = json_encode((string)$row['Degree'], JSON_HEX_TAG|JSON_HEX_AMP|JSON_HEX_APOS|JSON_HEX_QUOT);
                 }
-                echo substr($list,0,-1);
+                echo implode(',', $list);
             ?>
         ];
         //connect the autocomplete values from above to the degree textbox
@@ -731,26 +769,26 @@ $empNotUnique = false;
         var offenseTags = [
             <?php
                 //tags for the degree field autocomplete
-                $result = HRISDB::getInstance()->execute_search_query("SELECT DISTINCT(Nature) FROM tbl_Disciplinary ORDER BY NATURE");
-                $list = '';
+                $result = HRISDB::getInstance()->get_distinct_offense_natures();
+                $list = array();
                 while($row = mysqli_fetch_array($result))
                 {
-                    $list .= '"'.$row['Nature'].'",';
+                    $list[] = json_encode((string)$row['Nature'], JSON_HEX_TAG|JSON_HEX_AMP|JSON_HEX_APOS|JSON_HEX_QUOT);
                 }
-                echo substr($list,0,-1);
+                echo implode(',', $list);
             ?>
         ];
 
         var offenseDefTags = [
             <?php
                 //tags for the degree field autocomplete
-                $result = HRISDB::getInstance()->execute_search_query("SELECT DISTINCT(Definition) FROM tbl_Disciplinary ORDER BY Definition");
-                $list = '';
+                $result = HRISDB::getInstance()->get_distinct_offense_definitions();
+                $list = array();
                 while($row = mysqli_fetch_array($result))
                 {
-                    $list .= '"'.$row['Definition'].'",';
+                    $list[] = json_encode((string)$row['Definition'], JSON_HEX_TAG|JSON_HEX_AMP|JSON_HEX_APOS|JSON_HEX_QUOT);
                 }
-                echo substr($list,0,-1);
+                echo implode(',', $list);
             ?>
         ];
         console.log('offenseDefTags', offenseDefTags);
@@ -1247,30 +1285,26 @@ function showCat(fkCategory) {
 	
     var Departments = new Array (<?php
         //get all departments and put in javascript array
-        $result = HRISDB::getInstance()->execute_search_query("SELECT * FROM tbl_Department Where isActive = 1 ORDER BY Department");
+        $result = HRISDB::getInstance()->get_active_departments_all_columns();
 
-        $array = '';
+        $array = array();
         while($row = mysqli_fetch_array($result))
         {
-            $DepartmentName = str_replace('"', '\"', $row['Department']);
-            $array .= 'new Array("'.$row['pkid'].'","'.$DepartmentName.'","'.$row['fkDivision'].'"),';
+            $array[] = 'new Array('.implode(',', array_map(function ($v) { return json_encode((string)$v, JSON_HEX_TAG|JSON_HEX_AMP|JSON_HEX_APOS|JSON_HEX_QUOT); }, array($row['pkid'], $row['Department'], $row['fkDivision']))).')';
         }
-        $array = substr_replace($array ,"",-1);
-        echo $array;
+        echo implode(',', $array);
         ?>);
 
     var Sections = new Array(<?php
         //get all sections and put in sections array
-        $result = HRISDB::getInstance()->execute_search_query("SELECT * FROM tbl_Section Where isActive = 1 ORDER BY Section");
+        $result = HRISDB::getInstance()->get_active_sections_all_columns();
 
-        $array = '';
+        $array = array();
         while($row = mysqli_fetch_array($result))
         {
-            $SectionName = str_replace('"', '\"', $row['Section']);
-            $array .= 'new Array("'.$row['pkid'].'","'.$SectionName.'","'.$row['fkDepartment'].'"),';
+            $array[] = 'new Array('.implode(',', array_map(function ($v) { return json_encode((string)$v, JSON_HEX_TAG|JSON_HEX_AMP|JSON_HEX_APOS|JSON_HEX_QUOT); }, array($row['pkid'], $row['Section'], $row['fkDepartment']))).')';
         }
-        $array = substr_replace($array ,"",-1);
-        echo $array;
+        echo implode(',', $array);
         ?>);
 
  function updateDepartmentList()
@@ -1389,11 +1423,11 @@ function updateSectionList()
 <body>
 
     <h2>HRIS System</h2>
-    <h3>Employee Information  <?php echo "(" . $EmpInfo['LastName'] . ", " . $EmpInfo['FirstName'] . " " . $EmpInfo['MiddleName'] . ") [" . $EmpInfo['EmpNo'] . "]"; ?></h3>
+    <h3>Employee Information  <?php echo e("(" . $EmpInfo['LastName'] . ", " . $EmpInfo['FirstName'] . " " . $EmpInfo['MiddleName'] . ") [" . $EmpInfo['EmpNo'] . "]"); ?></h3>
 
     <div class="transbox">
 
-        <?php if($message!="")echo '<div class="alertMessage"><p><h4>&nbsp'.$message.'</p></h4></div>'; ?>
+        <?php if($message!="")echo '<div class="alertMessage"><p><h4>&nbsp'.e($message).'</p></h4></div>'; ?>
 
         <div id ="Personal Background">
             <!--<form name="EmployeeInfo" action="employeeinfo.php" method="POST" onSubmit="validateForm();">-->
@@ -1401,7 +1435,7 @@ function updateSectionList()
 
             <div id="tabs">
                     <ul>
-                        <?
+                        <?php
                         //tabs to be implemented
                         // employment history - ok
                         // Social Security
@@ -1430,7 +1464,7 @@ function updateSectionList()
                                 <td>
                                     <table border="<?php echo $border ?>">
                                         <tr>
-                                            <td rowspan="5"><img src="<?php if($EmpInfo['Picturepath']==''){echo 'pictures/default.jpg';}else echo $EmpInfo['Picturepath']; ?>" border="2" width="150" height="150"></td>
+                                            <td rowspan="5"><img src="<?php if($EmpInfo['Picturepath']==''){echo 'pictures/default.jpg';}else echo e($EmpInfo['Picturepath']); ?>" border="2" width="150" height="150"></td>
                                             <td rowspan="5" width="50px"></td>
                                             <td></td>
                                         </tr>
@@ -1438,7 +1472,7 @@ function updateSectionList()
                                         <tr>
                                             <td>Lastname:</td>
                                             <td>
-                                                <input type="text" name="LastName" maxlength="50" onkeypress="return isLetterKey(event)" value="<?php echo $EmpInfo['LastName'] ?>" />
+                                                <input type="text" name="LastName" maxlength="50" onkeypress="return isLetterKey(event)" value="<?php echo e($EmpInfo['LastName']) ?>" />
                                                 <font color="red"><text id='AlertLN'></text></font>
                                             </td>
                                         </tr>
@@ -1446,7 +1480,7 @@ function updateSectionList()
                                         <tr>
                                             <td>Firstname:</td>
                                             <td>
-                                                <input type="text" name="FirstName" maxlength="50" onkeypress="return isLetterKey(event)" value="<?php echo $EmpInfo['FirstName'] ?>"/>
+                                                <input type="text" name="FirstName" maxlength="50" onkeypress="return isLetterKey(event)" value="<?php echo e($EmpInfo['FirstName']) ?>"/>
                                                 <font color="red"><text id='AlertFN'></text></font>
                                             </td>
                                         </tr>
@@ -1454,7 +1488,7 @@ function updateSectionList()
                                         <tr>
                                             <td>Middlename:</td>
                                             <td>
-                                                <input type="text" name="MiddleName" maxlength="50" onkeypress="return isLetterKey(event)" value="<?php echo $EmpInfo['MiddleName'] ?>"/>
+                                                <input type="text" name="MiddleName" maxlength="50" onkeypress="return isLetterKey(event)" value="<?php echo e($EmpInfo['MiddleName']) ?>"/>
                                                 <font color="red"><text id='AlertMN'></text></font>
                                             </td>
                                         </tr>
@@ -1473,7 +1507,7 @@ function updateSectionList()
                                         <tr>
                                             <td>Nickname:</td>
                                             <td>
-                                                <input type="text" name="NickName" maxlength="20" style="width:250px" onkeypress="return isLetterKey(event)" value="<?php echo $EmpInfo['NickName'] ?>"/>
+                                                <input type="text" name="NickName" maxlength="20" style="width:250px" onkeypress="return isLetterKey(event)" value="<?php echo e($EmpInfo['NickName']) ?>"/>
                                                 <font color="red"><text id='AlertNN'></text></font>
                                             </td>
                                             <td>Gender:</td>
@@ -1492,9 +1526,7 @@ function updateSectionList()
                                                 <input type="text" name="DateOfBirth" style="width:250px" id="datepickerBday" onchange="getAge()" maxlength="10"
                                                 value="<?php if($pkid!="")
                                                         {
-                                                            if ($EmpInfo['DOBirth']!='0000-00-00'){
-                                                            $date = new DateTime($EmpInfo['DOBirth']);
-                                                            echo $date->format('m/d/Y');}
+                                                            echo e(formatDateForView($EmpInfo['DOBirth']));
                                                         }
                                                         ?>"/>
                                                 <font color="red"><text id='AlertDOB'></text></font>
@@ -1512,12 +1544,12 @@ function updateSectionList()
                                         <tr>
                                             <td>Age:</td>
                                             <td width="200px">
-                                                <input disabled="disabled" type="text" name="Age" readonly="readonly" size="29" value="<?php echo $EmpInfo['Age']; ?>"/><!-- age is dynamically calculated through javascript -->
+                                                <input disabled="disabled" type="text" name="Age" readonly="readonly" size="29" value="<?php echo e($EmpInfo['Age']); ?>"/><!-- age is dynamically calculated through javascript -->
                                                 <font color="red"><text id='AlertA'></text></font>
                                             </td>
                                             <td>Spouse:</td>
                                             <td>
-                                                <input type="text" name="Spouse"  style="width:200px" maxlength="50" onkeypress="return isLetterKey(event)" value="<?php echo $EmpInfo['Spouse'] ?>"/>
+                                                <input type="text" name="Spouse"  style="width:200px" maxlength="50" onkeypress="return isLetterKey(event)" value="<?php echo e($EmpInfo['Spouse']) ?>"/>
                                                 <font color="red"><text id='AlertS'></text></font>
                                             </td>
                                         </tr>
@@ -1547,7 +1579,7 @@ function updateSectionList()
                                         <tr>
                                             <td>Street:</td>
                                             <td>
-                                                <input type="text" name="CityAddStreet" maxlength="50" size="30" value="<?php echo $EmpInfo['CityAddress1'] ?>"/>
+                                                <input type="text" name="CityAddStreet" maxlength="50" size="30" value="<?php echo e($EmpInfo['CityAddress1']) ?>"/>
                                                 <font color="red"><text id='AlertCAS'></text></font>
                                             </td>
                                         </tr>
@@ -1555,7 +1587,7 @@ function updateSectionList()
                                         <tr>
                                             <td>Barangay:</td>
                                             <td>
-                                                <input type="text" name="CityAddBarangay" maxlength="50" size="30" value="<?php echo $EmpInfo['CityAddress2'] ?>"/>
+                                                <input type="text" name="CityAddBarangay" maxlength="50" size="30" value="<?php echo e($EmpInfo['CityAddress2']) ?>"/>
                                                 <font color="red"><text id='AlertCAB'></text></font>
                                             </td>
                                         </tr>
@@ -1563,7 +1595,7 @@ function updateSectionList()
                                         <tr>
                                             <td>City:</td>
                                             <td>
-                                                <input type="text" name="CityAdd" maxlength="50" size="30" value="<?php echo $EmpInfo['CityAddress3'] ?>"/>
+                                                <input type="text" name="CityAdd" maxlength="50" size="30" value="<?php echo e($EmpInfo['CityAddress3']) ?>"/>
                                                 <font color="red"><text id='AlertCA'></text></font>
                                             </td>
                                         </tr>
@@ -1575,7 +1607,7 @@ function updateSectionList()
                                         <tr>
                                             <td>Barangay:</td>
                                             <td>
-                                                <input type="text" name="ProvAddressBarangay" maxlength="50" size="30" value="<?php echo $EmpInfo['ProvAddress1'] ?>"/>
+                                                <input type="text" name="ProvAddressBarangay" maxlength="50" size="30" value="<?php echo e($EmpInfo['ProvAddress1']) ?>"/>
                                                 <font color="red"><text id='AlertPAB'></text></font>
                                             </td>
                                         </tr>
@@ -1583,7 +1615,7 @@ function updateSectionList()
                                         <tr>
                                             <td>Municipality:</td>
                                             <td>
-                                                <input type="text" name="ProvAddressMunicipality" maxlength="50" size="30" value="<?php echo $EmpInfo['ProvAddress2'] ?>"/>
+                                                <input type="text" name="ProvAddressMunicipality" maxlength="50" size="30" value="<?php echo e($EmpInfo['ProvAddress2']) ?>"/>
                                                 <font color="red"><text id='AlertPAM'></text></font>
                                             </td>
                                         </tr>
@@ -1591,7 +1623,7 @@ function updateSectionList()
                                         <tr>
                                             <td>Province:</td>
                                             <td>
-                                                <input type="text" name="ProvAddress" maxlength="50" size="30" value="<?php echo $EmpInfo['ProvAddress3'] ?>"/>
+                                                <input type="text" name="ProvAddress" maxlength="50" size="30" value="<?php echo e($EmpInfo['ProvAddress3']) ?>"/>
                                                 <font color="red"><text id='AlertPA'></text></font>
                                             </td>
                                         </tr>
@@ -1606,7 +1638,7 @@ function updateSectionList()
                                         <tr>
                                             <td>Telephone No:</td>
                                             <td colspan="2">
-                                                <input type="text" name="Telephone" maxlength="15" onkeypress="return isNumberKey(event)" value="<?php echo $EmpInfo['TelephoneNo'] ?>"/>
+                                                <input type="text" name="Telephone" maxlength="15" onkeypress="return isNumberKey(event)" value="<?php echo e($EmpInfo['TelephoneNo']) ?>"/>
                                                 <font color="red"><text id='AlertT'></text></font>
                                             </td>
                                         </tr>
@@ -1614,8 +1646,8 @@ function updateSectionList()
                                         <tr>
                                             <td>Incoming Shuttle Service:</td>
                                             <td>
-                                                <select name="IncomingShuttle" value="<?php echo $EmpInfo['Incoming'] ?>">
-                                                    <option value="0" <?php if($EmpInfo['Incoming']==0)echo 'selected="true"' ?>>Not Availing Service</option>
+                                                <select name="IncomingShuttle" value="<?php echo e($EmpInfo['Incoming']) ?>">
+                                                    <option value="0" <?php if((int)$EmpInfo['Incoming']===0)echo 'selected="true"' ?>>Not Availing Service</option>
                                                     <option value="1" <?php if($EmpInfo['Incoming']==1)echo 'selected="true"' ?>>Lower Bicutan</option>
                                                     <option value="2" <?php if($EmpInfo['Incoming']==2)echo 'selected="true"' ?>>FTI</option>
                                                     <option value="3" <?php if($EmpInfo['Incoming']==3)echo 'selected="true"' ?>>Sucat</option>
@@ -1630,7 +1662,7 @@ function updateSectionList()
                                             <td>Outgoing Shuttle Service:</td>
                                             <td>
                                                 <select name="OutgoingShuttle">
-                                                    <option value="0" <?php if($EmpInfo['Outgoing']==0)echo 'selected="true"' ?>>Not Availing Service</option>
+                                                    <option value="0" <?php if((int)$EmpInfo['Outgoing']===0)echo 'selected="true"' ?>>Not Availing Service</option>
                                                     <option value="1" <?php if($EmpInfo['Outgoing']==1)echo 'selected="true"' ?>>Lower Bicutan</option>
                                                     <option value="2" <?php if($EmpInfo['Outgoing']==2)echo 'selected="true"' ?>>FTI</option>
                                                     <option value="3" <?php if($EmpInfo['Outgoing']==3)echo 'selected="true"' ?>>Sucat</option>
@@ -1648,7 +1680,7 @@ function updateSectionList()
                                             <td>Remarks:</td>
                                             <td colspan="3">
                                                 <!-- <input type="text" name="Remarks" value="<?php echo $EmpInfo['Remarks'] ?>"/> -->
-                                                <textarea cols="74" maxlength="250" rows="2" name="Remarks"><?php echo $EmpInfo['Remarks'] ?></textarea>
+                                                <textarea cols="74" maxlength="250" rows="2" name="Remarks"><?php echo e($EmpInfo['Remarks']) ?></textarea>
                                             </td>
                                         </tr>
                                         <tr>
@@ -1670,12 +1702,12 @@ function updateSectionList()
                             <tr>
                                 <td>Father's Name:</td>
                                 <td>
-                                    <input type="text" name="FatherName" maxlength="50" size="25" onkeypress="return isLetterKey(event)" value="<?php echo $EmpInfo['FatherName'] ?>"/>
+                                    <input type="text" name="FatherName" maxlength="50" size="25" onkeypress="return isLetterKey(event)" value="<?php echo e($EmpInfo['FatherName']) ?>"/>
                                     <font color="red"><text id='AlertFather'></text></font>
                                 </td>
                                 <td rowspan="2">Person to be notified <br>in case of emergency:</td>
                                 <td rowspan="2">
-                                    <textarea cols="40" rows="3" maxlength="150" name="PersonToBeNotified"><?php echo $EmpInfo['Emergency']; ?></textarea>
+                                    <textarea cols="40" rows="3" maxlength="150" name="PersonToBeNotified"><?php echo e($EmpInfo['Emergency']); ?></textarea>
 
                                     <font color="red"><text id='AlertPersonNotify'></text></font>
                                 </td>
@@ -1684,7 +1716,7 @@ function updateSectionList()
                             <tr>
                                 <td>Mother's Name:</td>
                                 <td>
-                                    <input type="text" name="MotherName" maxlength="50" size="25" onkeypress="return isLetterKey(event)" value="<?php echo $EmpInfo['MotherName'] ?>"/>
+                                    <input type="text" name="MotherName" maxlength="50" size="25" onkeypress="return isLetterKey(event)" value="<?php echo e($EmpInfo['MotherName']) ?>"/>
                                     <font color="red"><text id='AlertMother'></text></font>
                                 </td>
                             </tr>
@@ -1727,15 +1759,14 @@ function updateSectionList()
                                                 $Depcounter++;
                                                 ?>
                                                 <tr>
-                                                <td axis="string" headers="ln"><?php echo $row['LastName'] ?></td>
-                                                <td axis="string" headers="fn"><?php echo $row['FirstName'] ?></td>
-                                                <td axis="string" headers="mn"><?php echo $row['MiddleName'] ?></td>
+                                                <td axis="string" headers="ln"><?php echo e($row['LastName']) ?></td>
+                                                <td axis="string" headers="fn"><?php echo e($row['FirstName']) ?></td>
+                                                <td axis="string" headers="mn"><?php echo e($row['MiddleName']) ?></td>
                                                 <td axis="number" headers="dob"><?php 
                                                     if($pkid!="")
                                                     {
-                                                        if ($EmpInfo['DOBirth']!='0000-00-00'){
-                                                        $date = new DateTime($row['DoBirth']);
-                                                        echo $date->format('m/d/Y');}
+                                                        //checks the dependent's own DoBirth, not the employee's DOBirth
+                                                        echo e(formatDateForView($row['DoBirth']));
                                                     }
                                                     ?><?php //echo $row['DoBirth'] ?></td>
 
@@ -1777,23 +1808,21 @@ function updateSectionList()
                                                 <?php
                                                 //get corresponding value for tax dependent
                                                 if($row['TaxDependent']==1)
-                                                    $taxdep = yes;
+                                                    $taxdep = 'yes';
                                                 else
-                                                    $taxdep = no;
+                                                    $taxdep = 'no';
                                                 ?>
 
                                                 <td axis="string" headers="dep" align="center"><?php echo $taxdep ?></td>
                                                 <td id="age" style="display:none"><?php 
                                                     if($pkid!="")
                                                     {
-                                                        if ($EmpInfo['DOBirth']!='0000-00-00'){
-                                                        $date = new DateTime($row['DoBirth']);
-                                                        echo $date->format('m/d/Y');}
+                                                        echo e(formatDateForView($row['DoBirth']));
                                                     }
                                                     ?><?php //echo GetAge($row['DoBirth']) ?></td>
-                                                <td style="display:none" id="deppkid"><?php echo $row['pkid'] ?></td>
-                                                <td style="display:none" id="relationshipNo"><?php echo $row['Relationship'] ?></td>
-                                                <td style="display:none" id="fkemployee"><input type="text" name="fkEmpNo" value="<?php echo $row['fkEmpNo'] ?>"/></td>
+                                                <td style="display:none" id="deppkid"><?php echo e($row['pkid']) ?></td>
+                                                <td style="display:none" id="relationshipNo"><?php echo e($row['Relationship']) ?></td>
+                                                <td style="display:none" id="fkemployee"><input type="text" name="fkEmpNo" value="<?php echo e($row['fkEmpNo']) ?>"/></td>
                                                 </tr>
                                                 <?php
                                             endwhile;
@@ -1909,7 +1938,7 @@ function updateSectionList()
                             <tr>
                                 <td>School/Address:</td>
                                 <td>
-                                    <textarea cols="50" maxlength="250" rows="2" name="SchoolAddress"><?php echo $EmpInfo['School']; ?></textarea>
+                                    <textarea cols="50" maxlength="250" rows="2" name="SchoolAddress"><?php echo e($EmpInfo['School']); ?></textarea>
                                     <!-- <input type="text" name="SchoolAddress" size="50" value=""/> -->
                                 </td>
                             </tr>
@@ -1917,23 +1946,18 @@ function updateSectionList()
                             <tr>
                                 <td>Date Graduated:</td>
                                 <td> <input type="text" name="DateGraduated" size="50" id="datepickerGrad" class="date" maxlength="10"
-                                    value="<?php
-
-                                                if ($EmpInfo['DOGraduated']!='0000-00-00'){
-                                                $date = new DateTime($EmpInfo['DOGraduated']);
-                                                echo $date->format('m/d/Y');}
-                                            ?>"/></td>
+                                    value="<?php echo e(formatDateForView($EmpInfo['DOGraduated'])); ?>"/></td>
                             </tr>
 
                             <tr>
                                 <td>Degree Obtained:</td>
-                                <td> <input type="text" maxlength="100" name="DegreeObtained" id="DegreeObtained" size="50" value="<?php echo $EmpInfo['Degree'] ?>"/></td>
+                                <td> <input type="text" maxlength="100" name="DegreeObtained" id="DegreeObtained" size="50" value="<?php echo e($EmpInfo['Degree']) ?>"/></td>
                             </tr>
 
                             <tr>
                                 <td>Honors/Awards:</td>
                                 <td>
-                                    <textarea cols="50" maxlength="250" rows="2" name="HonorsAwards"><?php echo $EmpInfo['Honors']; ?></textarea>
+                                    <textarea cols="50" maxlength="250" rows="2" name="HonorsAwards"><?php echo e($EmpInfo['Honors']); ?></textarea>
                                     <!-- <input type="text" name="HonorsAwards" value=""/> -->
                                 </td>
                                     
@@ -1942,7 +1966,7 @@ function updateSectionList()
                             <tr>
                                 <td>Government Examination Taken:</td>
                                 <td>
-                                    <textarea cols="50" maxlength="250" rows="2" name="GovernmentExams"><?php echo $EmpInfo['GovtExams']; ?></textarea>
+                                    <textarea cols="50" maxlength="250" rows="2" name="GovernmentExams"><?php echo e($EmpInfo['GovtExams']); ?></textarea>
                                     <!-- <input type="text" name="GovernmentExams" value=""/> -->
                                 </td>
                             </tr>
@@ -1953,7 +1977,7 @@ function updateSectionList()
                         <table class="transbox" border="<?php echo $border ?>">
                             <tr>
                                 <td>Employee#:</td>
-                                <td><input type="text" maxlength="8" onkeypress="return isLetterAndNumberKey(event)" name="EmployeeNo" style="width:300px" value="<?php echo $EmpInfo['EmpNo'] ?>"/></td>
+                                <td><input type="text" maxlength="8" onkeypress="return isLetterAndNumberKey(event)" name="EmployeeNo" style="width:300px" value="<?php echo e($EmpInfo['EmpNo']) ?>"/></td>
                                 <td>Salary Type:</td>
                                 <td>
                                     <select name="EmploymentStatus" style="width:250px">
@@ -1973,7 +1997,7 @@ function updateSectionList()
                                     <select name="Division" id="Division" onchange="updateDepartmentList(document.getElementById('Division').value);" size="1" style="width:300px">
                                         <?php
                                             //if creating a new employee, initialize to admin division
-                                            if($EmpInfo['fkDivision']=='0' || $pkid == "")
+                                            if($EmpInfo['fkDivision']=='0' || $EmpInfo['fkDivision']==='' || $pkid == "")
                                             {
                                                 $EmpInfo['fkDivision'] = 1;
                                                 $EmpInfo['fkDepartment'] = 5;
@@ -1983,7 +2007,7 @@ function updateSectionList()
                                             while($row = mysqli_fetch_array($result))
                                             {
                                                 ?>
-                                                <option value="<?php echo $row['pkid'] ?>" <?php if($EmpInfo['fkDivision']==$row['pkid']){echo 'selected="true"';} ?>><?php echo htmlentities($systemID = $row['division']) ?></option>
+                                                <option value="<?php echo e($row['pkid']) ?>" <?php if($EmpInfo['fkDivision']==$row['pkid']){echo 'selected="true"';} ?>><?php echo e($row['division']) ?></option>
                                                 <?php
                                             }
                                         ?>
@@ -2042,7 +2066,7 @@ function updateSectionList()
                                             while($row = mysqli_fetch_array($result))
                                             {
                                                 ?>
-                                                <option value="<?php echo $row['pkid']?>" <?php if($EmpInfo['fkDepartment']==$row['pkid']){echo 'selected="true"';} ?>><?php echo htmlentities($systemID = $row['Department']) ?></option>
+                                                <option value="<?php echo e($row['pkid'])?>" <?php if($EmpInfo['fkDepartment']==$row['pkid']){echo 'selected="true"';} ?>><?php echo e($row['Department']) ?></option>
                                                <?php
                                             }
                                         ?>
@@ -2056,7 +2080,7 @@ function updateSectionList()
                                             //echo $count;
                                             for ($i=1; $i <= $count; $i++) {
                                                 ?>
-                                                <option value="<?php echo $i ?>" <?php if($EmpInfo['SalaryType'] == $i)echo 'selected="true"' ?>><? echo HRISDB::getInstance()->get_salary_type_by_id($i);?></option>
+                                                <option value="<?php echo $i ?>" <?php if($EmpInfo['SalaryType'] == $i)echo 'selected="true"' ?>><?php echo e(HRISDB::getInstance()->get_salary_type_by_id($i));?></option>
                                                 <?php
                                             }
                                         ?>
@@ -2074,7 +2098,7 @@ function updateSectionList()
                                             while($row = mysqli_fetch_array($result))
                                             {
                                                 ?>
-                                                <option value="<?php echo $row['pkid']?>" <?php if($EmpInfo['fkSection']==$row['pkid']){echo 'selected="true"';} ?>><?php echo htmlentities($systemID = $row['Section']) ?></option>
+                                                <option value="<?php echo e($row['pkid'])?>" <?php if($EmpInfo['fkSection']==$row['pkid']){echo 'selected="true"';} ?>><?php echo e($row['Section']) ?></option>
                                                 <?php                       
                                             }
                                         ?>
@@ -2082,7 +2106,7 @@ function updateSectionList()
                                 </td>
                                 <td>SSS #:</td>
                                 <td>
-                                    <input type="text" maxlength="20" name="SSS" style="width:250px" onkeypress="return isNumberKey(event)" value="<?php echo $EmpInfo['SSN'] ?>"/>
+                                    <input type="text" maxlength="20" name="SSS" style="width:250px" onkeypress="return isNumberKey(event)" value="<?php echo e($EmpInfo['SSN']) ?>"/>
                                 </td>
                             </tr>
                             <tr>
@@ -2096,7 +2120,7 @@ function updateSectionList()
                                             while($row = mysqli_fetch_array($result))
                                             {
                                                 ?>
-                                                <option value="<?php echo $row['pkid']?>" <?php if($EmpInfo['fkPosition']==$row['pkid']){echo 'selected="true"';} ?>><?php echo htmlentities($systemID = $row['Position']) ?></option>
+                                                <option value="<?php echo e($row['pkid'])?>" <?php if($EmpInfo['fkPosition']==$row['pkid']){echo 'selected="true"';} ?>><?php echo e($row['Position']) ?></option>
                                                 <?php  
                                             }
                                         ?>
@@ -2104,7 +2128,7 @@ function updateSectionList()
                                 </td>
                                 <td>TIN #:</td>
                                 <td>
-                                    <input type="text"  maxlength="20" name="TIN" style="width:250px" onkeypress="return isNumberKey(event)" value="<?php echo $EmpInfo['TIN'] ?>"/>
+                                    <input type="text"  maxlength="20" name="TIN" style="width:250px" onkeypress="return isNumberKey(event)" value="<?php echo e($EmpInfo['TIN']) ?>"/>
                                 </td>
                             </tr>
 
@@ -2112,24 +2136,20 @@ function updateSectionList()
                                 <td>Date Hired:</td>
                                 <td>
                                     <input type="text" name="DateHired" id="datepickerHired" class="date" maxlength="10"
-                                    value="<?php 
-                                            if ($EmpInfo['DateHired']!='0000-00-00'){
-                                            $date = new DateTime($EmpInfo['DateHired']);
-                                            echo $date->format('m/d/Y');}
-                                            ?>" style="width:300px"/>
+                                    value="<?php echo e(formatDateForView($EmpInfo['DateHired'])); ?>" style="width:300px"/>
                                 </td>
                                 <td>PagIBIG #:</td>
                                 <td>
-                                    <input type="text" name="PagIbig" maxlength="25" style="width:250px" onkeypress="return isNumberKey(event)" value="<?php echo $EmpInfo['PagIbig'] ?>"/>
+                                    <input type="text" name="PagIbig" maxlength="25" style="width:250px" onkeypress="return isNumberKey(event)" value="<?php echo e($EmpInfo['PagIbig']) ?>"/>
                                 </td>
                             </tr>
 
                             <tr>
                                 <td>Blood Type:</td>
-                                <td><input type="text" maxlength="3" name="BloodType" style="width:300px" onkeypress="return isLetterKey(event)" value="<?php echo $EmpInfo['BloodType'] ?>"/></td>
+                                <td><input type="text" maxlength="3" name="BloodType" style="width:300px" onkeypress="return isLetterKey(event)" value="<?php echo e($EmpInfo['BloodType']) ?>"/></td>
                                 <td>PhilHealth #:</td>
                                 <td>
-                                    <input type="text" maxlength="20" name="PhilHealth" style="width:250px" onkeypress="return isNumberKey(event)" value="<?php echo $EmpInfo['PhilHealth'] ?>"/>
+                                    <input type="text" maxlength="20" name="PhilHealth" style="width:250px" onkeypress="return isNumberKey(event)" value="<?php echo e($EmpInfo['PhilHealth']) ?>"/>
                                 </td>
                             </tr>
                         </table>
@@ -2141,18 +2161,21 @@ function updateSectionList()
 								echo "<table class = 'transbox' id = 'resignInfo' style = 'visibility: visible;'>";
 							} else if ($EmpInfo['EmpStatus'] == '3') {
 								echo "<table class = 'transbox' id = 'resignInfo' style = 'visibility: hidden;'>";
-							} 
+							} else {
+								//unknown status: keep the table hidden so the closing tag below always has an opening tag
+								echo "<table class = 'transbox' id = 'resignInfo' style = 'visibility: hidden;'>";
+							}
 						?>
 							<tr>
 								<th colspan = '2'>Resignation Information</th>
 							</tr>
 							<tr>
 								<td>Effectivity Date:</td>
-								<td><input type = 'date' name = 'ResEffectDate' value = '<?php echo $EmpInfo['Effectivity']; ?>'></td>
+								<td><input type = 'date' name = 'ResEffectDate' value = '<?php echo e(formatDateForView($EmpInfo['Effectivity'], 'Y-m-d')); ?>'></td>
 							</tr>
 							<tr>
 								<td>Reason:</td>
-								<td><textarea cols = '98px' name = 'ResReason' rows = '5px'><?php echo $EmpInfo['Reason']; ?></textarea></td>
+								<td><textarea cols = '98px' name = 'ResReason' rows = '5px'><?php echo e($EmpInfo['Reason']); ?></textarea></td>
 							</tr>
 						</table>
                     </div>
@@ -2228,8 +2251,8 @@ function updateSectionList()
                                                     default: echo ''; break;
                                                 }
                                                 ?></td>
-                                                <td axis="string" headers="nature"><?php echo $row['Nature'] ?></td>
-                                                <td axis="string" headers="definition"><?php echo $row['Definition'] ?></td>
+                                                <td axis="string" headers="nature"><?php echo e($row['Nature']) ?></td>
+                                                <td axis="string" headers="definition"><?php echo e($row['Definition']) ?></td>
                                                 <td axis="string" headers="freq"><center><?php 
 
                                                 switch ($row['Frequency'] ) {
@@ -2242,26 +2265,22 @@ function updateSectionList()
                                                     default: break;
                                                 }
                                                 ?></center></td>
-                                                <td axis="string" headers="effect" title="<?php $date = new DateTime($row['Effectivity']); echo $date->format('F j, Y'); ?>"><?php 
+                                                <td axis="string" headers="effect" title="<?php echo e(formatDateForView($row['Effectivity'], 'F j, Y')); ?>"><?php 
                                                     if($pkid!="")
                                                     {
-                                                        if ($row['Effectivity']!='0000-00-00'){
-                                                        $date = new DateTime($row['Effectivity']);
-                                                        echo $date->format('m/d/Y');}
+                                                        echo e(formatDateForView($row['Effectivity']));
                                                     }
                                                     ?><?php //echo $row['Effectivity'] ?></td>
-                                                <td axis="string" headers="notif" title="<?php $date = new DateTime($row['Notification']); echo $date->format('F j, Y'); ?>"><?php 
+                                                <td axis="string" headers="notif" title="<?php echo e(formatDateForView($row['Notification'], 'F j, Y')); ?>"><?php 
                                                     if($pkid!="")
                                                     {
-                                                        if ($row['Notification']!='0000-00-00'){
-                                                        $date = new DateTime($row['Notification']);
-                                                        echo $date->format('m/d/Y');}
+                                                        echo e(formatDateForView($row['Notification']));
                                                     }
                                                     ?><?php //echo $row['Notification'] ?></td>
-                                                <td style="display:none" id="pkid"><?php echo $row['pkid'] ?></td>
-                                                <td style="display:none" id="actionNo"><?php echo $row['Action'] ?></td>
-                                                <td style="display:none" id="frequenqyNo"><?php echo $row['Frequency'] ?></td>
-                                                <td style="display:none" id="fkemployee"><input type="text" name="fkEmpNo" value="<?php echo $row['fkEmpNo'] ?>"/></td>
+                                                <td style="display:none" id="pkid"><?php echo e($row['pkid']) ?></td>
+                                                <td style="display:none" id="actionNo"><?php echo e($row['Action']) ?></td>
+                                                <td style="display:none" id="frequenqyNo"><?php echo e($row['Frequency']) ?></td>
+                                                <td style="display:none" id="fkemployee"><input type="text" name="fkEmpNo" value="<?php echo e($row['fkEmpNo']) ?>"/></td>
                                                 
                                                 </tr>
                                                 <?php
@@ -2404,22 +2423,21 @@ function updateSectionList()
                                     <tr>
                                         <td axis="string" headers="period" title="<?php
 
-                                        $date = new DateTime($row['PeriodFrom']);
-                                        echo $date->format('F j, Y');
+                                        echo e(formatDateForView($row['PeriodFrom'], 'F j, Y'));
 
                                         ?>"><?php
                                         
                                         // $date = new DateTime($row['Period']);
                                         // echo $date->format('Y/m/d');
-										echo date('Y/m/d', strtotime($row['PeriodFrom'])).'-'.date('Y/m/d', strtotime($row['PeriodTo']));
+										echo e(formatDateForView($row['PeriodFrom'], 'Y/m/d').'-'.formatDateForView($row['PeriodTo'], 'Y/m/d'));
                                          ?></td>
-                                        <td axis="string" headers="title" ><?php echo $row['Title'] ?></td>
-                                        <td axis="string" headers="objective" ><?php echo $row['Objective'] ?></td>
-                                        <td axis="string" headers="venue" ><?php echo $row['Venue'] ?></td>
-                                        <td axis="string" headers="trainor" ><?php echo $row['Trainor'] ?></td>
-                                        <td axis="string" headers="mechanics" ><?php echo $row['Mechanics'] ?></td>
-                                        <td axis="string" headers="result" ><?php echo $row['Result'] ?></td>
-                                        <td axis="string" headers="remarks" ><?php echo $row['Remarks'] ?></td>
+                                        <td axis="string" headers="title" ><?php echo e($row['Title']) ?></td>
+                                        <td axis="string" headers="objective" ><?php echo e($row['Objective']) ?></td>
+                                        <td axis="string" headers="venue" ><?php echo e($row['Venue']) ?></td>
+                                        <td axis="string" headers="trainor" ><?php echo e($row['Trainor']) ?></td>
+                                        <td axis="string" headers="mechanics" ><?php echo e($row['Mechanics']) ?></td>
+                                        <td axis="string" headers="result" ><?php echo e($row['Result']) ?></td>
+                                        <td axis="string" headers="remarks" ><?php echo e($row['Remarks']) ?></td>
                                     </tr>
                                     <?php
                                 endwhile;
@@ -2452,40 +2470,40 @@ function updateSectionList()
 
                                 <?php
 
-                                //die("SELECT * FROM tbl_EmploymentHistory WHERE fkEmployee = ".$EmpInfo['pkid']);
-                                $result = HRISDB::getInstance()->execute_search_query("SELECT * FROM tbl_EmploymentHistory WHERE fkEmployee = ".$EmpInfo['pkid']." ORDER BY pkid DESC ");//DateStart DESC
+                                //bound query in HRISDB; pkid 0 (new employee) returns no rows
+                                $result = HRISDB::getInstance()->get_employment_history_by_employee((int)$EmpInfo['pkid']);
 
                                 $counter = 0;
                                 while($row = mysqli_fetch_array($result))
                                 {
                                     $counter++;
                                     echo '<tr>';
-                                    echo '<td headers="div">'.HRISDB::getinstance()->get_division_name_by_id($row['fkDivision']).'</td>';
-                                    echo '<td headers="dep">'.HRISDB::getinstance()->get_department_name_by_id($row['fkDepartment']).'</td>';
-                                    echo '<td headers="sec">'.HRISDB::getinstance()->get_section_name_by_id($row['fkSection']).'</td>';
-                                    echo '<td headers="pos">'.HRISDB::getinstance()->get_position_name_by_id($row['fkPosition']).'</td>';
-                                    echo '<td headers="from">'.convertDateFromatViewing($row['DateStart']).'</td>';
-                                    echo '<td headers="to">'.$row['DateEnd'].'</td>';
-                                    echo '<td style="display:none" id="fkPos">'.$row['fkPosition'].'</td>';
-                                    echo '<td style="display:none" id="fkDiv">'.$row['fkDivision'].'</td>';
-                                    echo '<td style="display:none" id="fkDep">'.$row['fkDepartment'].'</td>';
-                                    echo '<td style="display:none" id="fkSec">'.$row['fkSection'].'</td>';
-                                    echo '<td style="display:none" id="pkid">'.$row['pkid'].'</td>';
+                                    echo '<td headers="div">'.e(HRISDB::getinstance()->get_division_name_by_id($row['fkDivision'])).'</td>';
+                                    echo '<td headers="dep">'.e(HRISDB::getinstance()->get_department_name_by_id($row['fkDepartment'])).'</td>';
+                                    echo '<td headers="sec">'.e(HRISDB::getinstance()->get_section_name_by_id($row['fkSection'])).'</td>';
+                                    echo '<td headers="pos">'.e(HRISDB::getinstance()->get_position_name_by_id($row['fkPosition'])).'</td>';
+                                    echo '<td headers="from">'.e(convertDateFromatViewing($row['DateStart'])).'</td>';
+                                    echo '<td headers="to">'.e($row['DateEnd']).'</td>';
+                                    echo '<td style="display:none" id="fkPos">'.e($row['fkPosition']).'</td>';
+                                    echo '<td style="display:none" id="fkDiv">'.e($row['fkDivision']).'</td>';
+                                    echo '<td style="display:none" id="fkDep">'.e($row['fkDepartment']).'</td>';
+                                    echo '<td style="display:none" id="fkSec">'.e($row['fkSection']).'</td>';
+                                    echo '<td style="display:none" id="pkid">'.e($row['pkid']).'</td>';
                                     echo '</tr>';
                                 }
                                 if($counter==0)
                                 {
                                     echo '<tr>';
-                                    echo '<td>'.HRISDB::getinstance()->get_division_name_by_id($EmpInfo['fkDivision']).'</td>';
-                                    echo '<td>'.HRISDB::getinstance()->get_department_name_by_id($EmpInfo['fkDepartment']).'</td>';
-                                    echo '<td>'.HRISDB::getinstance()->get_section_name_by_id($EmpInfo['fkSection']).'</td>';
-                                    echo '<td>'.HRISDB::getinstance()->get_position_name_by_id($EmpInfo['fkPosition']).'</td>';
-                                    echo '<td>'.convertDateFromatViewing($EmpInfo['DateHired']).'</td>';
+                                    echo '<td>'.e(HRISDB::getinstance()->get_division_name_by_id($EmpInfo['fkDivision'])).'</td>';
+                                    echo '<td>'.e(HRISDB::getinstance()->get_department_name_by_id($EmpInfo['fkDepartment'])).'</td>';
+                                    echo '<td>'.e(HRISDB::getinstance()->get_section_name_by_id($EmpInfo['fkSection'])).'</td>';
+                                    echo '<td>'.e(HRISDB::getinstance()->get_position_name_by_id($EmpInfo['fkPosition'])).'</td>';
+                                    echo '<td>'.e(convertDateFromatViewing($EmpInfo['DateHired'])).'</td>';
                                     echo '<td>Present</td>';
-                                    echo '<td style="display:none" id="fkPos">'.$EmpInfo['fkPosition'].'</td>';
-                                    echo '<td style="display:none" id="fkDiv">'.$EmpInfo['fkDivision'].'</td>';
-                                    echo '<td style="display:none" id="fkDep">'.$EmpInfo['fkDepartment'].'</td>';
-                                    echo '<td style="display:none" id="fkSec">'.$EmpInfo['fkSection'].'</td>';
+                                    echo '<td style="display:none" id="fkPos">'.e($EmpInfo['fkPosition']).'</td>';
+                                    echo '<td style="display:none" id="fkDiv">'.e($EmpInfo['fkDivision']).'</td>';
+                                    echo '<td style="display:none" id="fkDep">'.e($EmpInfo['fkDepartment']).'</td>';
+                                    echo '<td style="display:none" id="fkSec">'.e($EmpInfo['fkSection']).'</td>';
                                     echo '<td style="display:none" id="pkid"></td>';
                                     echo '</tr>';
                                 }
@@ -2508,7 +2526,7 @@ function updateSectionList()
                                             while($row = mysqli_fetch_array($result))
                                             {
                                                 ?>
-                                                <option value="<?php echo $row['pkid'] ?>"><?php echo htmlentities($systemID = $row['division']) ?></option>
+                                                <option value="<?php echo e($row['pkid']) ?>"><?php echo e($row['division']) ?></option>
                                                 <?php
                                             }
                                         ?>
@@ -2554,7 +2572,7 @@ function updateSectionList()
                                             while($row = mysqli_fetch_array($result))
                                             {
                                                 ?>
-                                                <option value="<?php echo $row['pkid']?>" ><?php echo htmlentities($systemID = $row['Position']) ?></option>
+                                                <option value="<?php echo e($row['pkid'])?>" ><?php echo e($row['Position']) ?></option>
                                                 <?php
                                             }
                                         ?>
@@ -2611,22 +2629,31 @@ function updateSectionList()
                             </thead>
                             <tbody>
                                 <?php
-                                $result_appraisal = PAS::getInstance()->get_appraisal_record($EmpInfo['EmpNo']);
-                                while($row = mysqli_fetch_array($result_appraisal)):
+                                //PAS is a separate database: a failure here must not break the whole page
+                                $result_appraisal = null;
+                                try
+                                {
+                                    $result_appraisal = PAS::getInstance()->get_appraisal_record($EmpInfo['EmpNo']);
+                                }
+                                catch (Throwable $ex)
+                                {
+                                    error_log('employeeinfo.php appraisal: ' . $ex->getMessage());
+                                }
+                                while($result_appraisal && ($row = mysqli_fetch_array($result_appraisal))):
                                     ?>
                                     <tr>                                        
-                                        <td axis="string" headers="rating" style="width:20%"><center><?php echo $row['rating']; ?></center></td>
-                                        <td axis="string" headers="position" style="width:15%"><center><?php echo $row['position']; ?></center></td>
-                                        <td axis="string" headers="from" style="width:13%"><center><?php echo date('M d, Y',strtotime($row['evaluation_from'])); ?></center></td>
-                                        <td axis="string" headers="to" style="width:13%"><center><?php echo date('M d, Y',strtotime($row['evaluation_to'])); ?></center></td>
-                                        <td axis="string" headers="effectivity_date" style="width:13%"><center><?php echo date('M d, Y',strtotime($row['effectivity_date'])); ?></center></td>
-                                        <td axis="string" headers="purpose" style="width:15%"><center><?php echo $row['purpose']; ?></center></td>
-                                        <td axis="string" headers="rated_by" style="width:20%"><center><?php echo $row['rated_by']; ?></center></td>
+                                        <td axis="string" headers="rating" style="width:20%"><center><?php echo e($row['rating']); ?></center></td>
+                                        <td axis="string" headers="position" style="width:15%"><center><?php echo e($row['position']); ?></center></td>
+                                        <td axis="string" headers="from" style="width:13%"><center><?php echo e(formatDateForView($row['evaluation_from'], 'M d, Y')); ?></center></td>
+                                        <td axis="string" headers="to" style="width:13%"><center><?php echo e(formatDateForView($row['evaluation_to'], 'M d, Y')); ?></center></td>
+                                        <td axis="string" headers="effectivity_date" style="width:13%"><center><?php echo e(formatDateForView($row['effectivity_date'], 'M d, Y')); ?></center></td>
+                                        <td axis="string" headers="purpose" style="width:15%"><center><?php echo e($row['purpose']); ?></center></td>
+                                        <td axis="string" headers="rated_by" style="width:20%"><center><?php echo e($row['rated_by']); ?></center></td>
                                     </tr>
                                     <?php
                                 endwhile;
 
-                                if($result_appraisal->num_rows == 0)
+                                if(!$result_appraisal || $result_appraisal->num_rows == 0)
                                 {
                                   ?><tfoot><td colspan="7" align="center"><i>No Appraisal Record Found</i></td></tfoot><?php
                                 }
@@ -2643,7 +2670,7 @@ function updateSectionList()
 						   <tr>
 								<td rowspan="2">Search For 201 File Category: </td>
 								<td rowspan="2">
-									<input type="hidden" id="fkEmployee" value="<?php echo $pkid?>"> 
+									<input type="hidden" id="fkEmployee" value="<?php echo e($pkid)?>"> 
 									<select name="search_fileCat" id="search_fileCat" size="1" onchange="showCat(this.value)" style="width:280px">
 										<option></option>
 										<?php
@@ -2652,7 +2679,7 @@ function updateSectionList()
 											while($row = mysqli_fetch_array($result))
 											{
 												?>
-												<option value="<?php echo $row['pkid'] ?>"><?php echo htmlentities($systemID = $row['empfilecategory']) ?></option>
+												<option value="<?php echo e($row['pkid']) ?>"><?php echo e($row['empfilecategory']) ?></option>
 												<?php
 											}
 										?>
@@ -2682,10 +2709,10 @@ function updateSectionList()
 									$FileCatCounter++;
 									{
 										echo '<tr align="center">';
-										echo '<td style="display:none" id="pkid">'.$row['pkid'].'</td>';
-										echo '<td headers="fileCat">'.$row['empfilecategory'].'</td>';
-										echo '<td headers="file_Name">'.$row['file_name'].'</td>';
-										echo '<td><a href="pdfuploads/'.$row['pkid'].'" target="_blank">View File</a></td>';
+										echo '<td style="display:none" id="pkid">'.e($row['pkid']).'</td>';
+										echo '<td headers="fileCat">'.e($row['empfilecategory']).'</td>';
+										echo '<td headers="file_Name">'.e($row['file_name']).'</td>';
+										echo '<td><a href="pdfuploads/'.e($row['pkid']).'" target="_blank">View File</a></td>';
 										echo '</tr>';
 									}
                                 ?>
@@ -2706,7 +2733,7 @@ function updateSectionList()
             </div>
                 <input type="hidden" name="formtype" value="">
                 <input type="hidden" name="tabIndex" value="">
-                <input type="hidden" name="pkid" value="<?php echo $pkid ?>">
+                <input type="hidden" name="pkid" value="<?php echo e($pkid) ?>">
                 <font color="red"><text id='Alerts'></text></font><br>
 
                 &nbsp; <input type="button" id="button" value="Save" onClick="validateForm();" class="ui-button ui-widget ui-state-default ui-corner-all"/>
@@ -2719,7 +2746,7 @@ function updateSectionList()
 	<form id="scannedFile" method="post" enctype="multipart/form-data">
 	<!--	<input type="text" id="fkUploadFile" value=""> 
 		<input type="hidden" id="fkUploadFile" value="<?php //echo $pkid?>">-->
-		<input type="hidden" id="fkEmployee" value="<?php echo $pkid?>">
+		<input type="hidden" id="fkEmployee" value="<?php echo e($pkid)?>">
 		
 		<br>		
 		<label for="fileCat">Select Employee 201 Category: </label>
@@ -2730,7 +2757,7 @@ function updateSectionList()
 					while($row = mysqli_fetch_array($result))
 					{
 					?>
-						<option value="<?php echo $row['pkid'] ?>"><?php echo htmlentities($systemID = $row['empfilecategory']) ?></option>
+						<option value="<?php echo e($row['pkid']) ?>"><?php echo e($row['empfilecategory']) ?></option>
 					<?php
 					}
 				?>

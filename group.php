@@ -1,6 +1,6 @@
 
 <?php
-	require_once("global_includes/hris-oop.php");
+	require_once __DIR__ . '/../global_includes/hris-oop.php';
 ?>
 
 

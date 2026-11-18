@@ -1,6 +1,6 @@
 <?php
 include_once 'db_hris.php';
-require_once("global_includes/hris-oop.php");
+require_once __DIR__ . '/../global_includes/hris-oop.php';
 
 $valid_formats = array("pdf", "PDF");
 $max_file_size = 1000000*2; // 2MB 

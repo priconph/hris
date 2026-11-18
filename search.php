@@ -2,11 +2,18 @@
 
 session_start();
 
-$search = $_GET["search"] ?? '';
-$field = $_GET["field"] ?? '';
-$statusFilter = $_GET["status"] ?? '';
+// array values (?search[]=x) would break string functions on PHP 8; treat them as empty
+$search = (isset($_GET["search"]) && is_string($_GET["search"])) ? $_GET["search"] : '';
+$field = (isset($_GET["field"]) && is_string($_GET["field"])) ? $_GET["field"] : '';
+$statusFilter = (isset($_GET["status"]) && is_string($_GET["status"])) ? $_GET["status"] : '';
 
-require_once __DIR__ . '//global_includes/hris-oop.php';
+// escape a value for HTML output (null-safe); prefixed so it cannot clash with global_includes
+function search_e($v)
+{
+  return htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8');
+}
+
+require_once __DIR__ . '/../global_includes/hris-oop.php';
 
 ?>
 
@@ -88,31 +95,26 @@ require_once __DIR__ . '//global_includes/hris-oop.php';
     $status = null;
   }
 
-  // legacy executable SQL string kept in the session (read by excel.php / excel_2.php); values are escaped
-  $esc = $db->real_escape_string($search);
-  if($field == "FullName")
-    $where = " WHERE (firstname like '%".$esc."%' OR lastname like '%".$esc."%' or middlename like '%".$esc."%')";
-  else if($pkids !== null)
-  {
-    if(count($pkids) > 0)
-      $where = " WHERE (" . implode(' or ', array_map(function($id) use ($field) { return " ".$field."=".(int)$id; }, $pkids)) . ") ";
-    else
-      $where = " WHERE (".$field."='-1') ";
-  }
-  else
-    $where = " WHERE (".$field." LIKE '%".$esc."%') ";
-  $select = "SELECT *, CONCAT(LastName, ', ', FirstName, ' (', MiddleName,')') as FullName FROM tbl_EmployeeInfo ";
-  $statusSql = ($status === null) ? '' : ' and EmpStatus = '.$status;
-  $legacySql = $select . $where . $statusSql . " ORDER BY EmpNo ASC";
-
-  // throws on an invalid column name, so $legacySql is only stored for a validated $field
-  $result = $db->search_employees_list($field, $search, $pkids, $status);
-  $_SESSION['SQL'] = $legacySql;
-
   $resultCounter = 0;
   try
   {
-    while($row = mysqli_fetch_array($result))
+    // $field is a column name (cannot be bound): only the columns offered by the dropdown in index.php are accepted
+    $allowedFields = array('EmpNo', 'FullName', 'LastName', 'FirstName', 'MiddleName', 'fkposition', 'fkdivision', 'fkdepartment', 'fksection');
+    if (!in_array($field, $allowedFields, true))
+    {
+      throw new InvalidArgumentException('Invalid search field');
+    }
+    $result = $db->search_employees_list($field, $search, $pkids, $status);
+    // validated parameters for excel.php / excel_2.php, which rebuild the export query with bound parameters
+    // (the old $_SESSION['SQL'] raw SQL string is no longer written)
+    $_SESSION['SQL_PARAMS'] = array(
+      'field'  => $field,
+      'search' => $search,
+      'pkids'  => ($pkids === null) ? null : array_map('intval', $pkids),
+      'status' => $status
+    );
+
+    while($result && ($row = mysqli_fetch_array($result)))
     {
       $position = $db->get_position_name_by_id($row['fkPosition']);
       $department = $db->get_department_name_by_id($row['fkDepartment']);
@@ -128,13 +130,13 @@ require_once __DIR__ . '//global_includes/hris-oop.php';
       echo '<tr>';
       //echo '<td></td>';
       echo '<td align = "center" axis="string" headers="stat" title="'.$toolTip.'"><img src="src/'.$image.'"/><div style="visibility: hidden; display:none">'.$image.'</div></td>';
-      echo '<td align = "center" axis="string" headers="empNo">'.$row['EmpNo'].'</td>';
-      echo '<td align = "center" axis="string" headers="EmpN">'.$row['FullName'].'</td>';
-      echo '<td align = "center" axis="string" headers="Pos">'.$position.'</td>';
-      echo '<td align = "center" axis="string" headers="Div">'.$division.'</td>';
-      echo '<td align = "center" axis="string" headers="Dep">'.$department.'</td>';
-      echo '<td align = "center" axis="string" headers="Sec">'.$section.'</td>';
-      echo '<td align = "center" style="display:none" id="pkid">'.$row['pkid'].'</td>';
+      echo '<td align = "center" axis="string" headers="empNo">'.search_e($row['EmpNo']).'</td>';
+      echo '<td align = "center" axis="string" headers="EmpN">'.search_e($row['FullName']).'</td>';
+      echo '<td align = "center" axis="string" headers="Pos">'.search_e($position).'</td>';
+      echo '<td align = "center" axis="string" headers="Div">'.search_e($division).'</td>';
+      echo '<td align = "center" axis="string" headers="Dep">'.search_e($department).'</td>';
+      echo '<td align = "center" axis="string" headers="Sec">'.search_e($section).'</td>';
+      echo '<td align = "center" style="display:none" id="pkid">'.search_e($row['pkid']).'</td>';
       echo '</tr>';
       ?>
 
@@ -142,9 +144,11 @@ require_once __DIR__ . '//global_includes/hris-oop.php';
       $resultCounter++;
     }
   }
-  catch (Exception $e)
+  catch (Throwable $e)
   {
-    echo $e->getMessage();
+    // never show SQL or exception text in the browser
+    error_log('search.php: ' . $e->getMessage());
+    echo 'A database error occurred. Please try again or contact your administrator.';
   }
 ?>
 
@@ -154,7 +158,7 @@ require_once __DIR__ . '//global_includes/hris-oop.php';
 //if no result is found
 if($resultCounter==0)
 {
-  ?><tfoot><td colspan="7" align="center"><font color="red">no results for '<?php echo htmlspecialchars($search) ?>'</font></td></tfoot><?php
+  ?><tfoot><td colspan="7" align="center"><font color="red">no results for '<?php echo search_e($search) ?>'</font></td></tfoot><?php
 }
 else
 {

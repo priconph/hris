@@ -1,6 +1,6 @@
 <?php
-	// Credentials come from global_includes/db_env_hris.php, never from this file.
-	require_once __DIR__ . '/global_includes/db_env_hris.php';
+	// Credentials come from ../global_includes/db_env_hris.php (www/global_includes), never from this file.
+	require_once __DIR__ . '/../global_includes/db_env_hris.php';
 
 	function getPdo(): PDO
 	{
